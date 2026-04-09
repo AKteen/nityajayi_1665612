@@ -1,29 +1,23 @@
 from langchain.tools import tool
-from db.neo import neo_search, neo_decision_chain
+from db.neo import neo_search
 
 
 @tool
-def search_relationship_graph(entity: str) -> str:
-    """Search for decisions and reasoning related to a person, topic or keyword in Neo4j."""
-    records = neo_search(entity)
+def search_decisions(query: str) -> str:
+    """Search organizational memory for decisions, reasons, people and alternatives related to a topic or question."""
+    records = neo_search(query)
     if not records:
-        return f"No relationships found for: {entity}"
-    return "\n---\n".join(
-        f"Person: {r['person']}\nDecision: {r['action']}\n"
-        f"Reason: {r['reason']}\nImpact: {r['impact']}\n"
-        f"Source: {r['source']}\nTimestamp: {r['timestamp']}"
-        for r in records
-    )
-
-
-@tool
-def get_decision_chain(topic: str) -> str:
-    """Get full decision history for a specific topic."""
-    records = neo_decision_chain(topic)
-    if not records:
-        return f"No decision chain found for: {topic}"
-    return "\n".join(
-        f"→ [{r['timestamp']}] {r['person']} decided: {r['action']}\n"
-        f"  Because: {r['reason']}  |  From: {r['source']}"
-        for r in records
-    )
+        return f"No decisions found for: {query}"
+    output = []
+    for r in records:
+        output.append(
+            f"Decision: {r['decision']}\n"
+            f"Topic: {r['topic']}\n"
+            f"Reasons: {', '.join(r['reasons']) if r['reasons'] else 'N/A'}\n"
+            f"People: {', '.join(r['people']) if r['people'] else 'N/A'}\n"
+            f"Alternatives: {', '.join(r['alternatives']) if r['alternatives'] else 'N/A'}\n"
+            f"Impact: {r['impact']}\n"
+            f"Source: {r['source']} | Timestamp: {r['timestamp']}\n"
+            f"ID: {r['id']}"
+        )
+    return "\n---\n".join(output)

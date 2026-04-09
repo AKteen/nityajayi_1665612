@@ -1,3 +1,4 @@
+import uuid
 from neo4j import GraphDatabase
 from core.config import settings
 
@@ -17,60 +18,65 @@ def neo_store(
     alternatives: list = None,
     timestamp: str = "",
 ) -> str:
+    decision_id = str(uuid.uuid4())
     with _driver.session() as session:
         session.run(
             """
             MERGE (d:Decision {action: $action})
-            SET d.reason      = $reason,
-                d.source      = $source,
-                d.subject     = $subject,
-                d.impact      = $impact,
-                d.alternatives= $alternatives,
-                d.timestamp   = $timestamp
+            SET d.id        = $decision_id,
+                d.subject   = $subject,
+                d.impact    = $impact,
+                d.source    = $source,
+                d.timestamp = $timestamp
             WITH d
-            UNWIND $people AS person
-            MERGE (p:Person {name: person})
-            MERGE (p)-[:MADE]->(d)
+            FOREACH (person IN $people |
+                MERGE (p:Person {name: person})
+                MERGE (d)-[:MADE_BY]->(p)
+            )
+            WITH d
+            FOREACH (alt IN $alternatives |
+                MERGE (a:Alternative {text: alt})
+                MERGE (d)-[:ALTERNATIVE]->(a)
+            )
+            WITH d
+            FOREACH (r IN CASE WHEN $reason <> '' THEN [$reason] ELSE [] END |
+                MERGE (rn:Reason {text: r})
+                MERGE (d)-[:BASED_ON]->(rn)
+            )
             """,
-            action=action, reason=reason, source=source,
+            action=action, decision_id=decision_id,
             subject=subject, impact=impact,
-            alternatives=alternatives or [],
-            timestamp=timestamp,
+            source=source, timestamp=timestamp,
             people=people or [],
+            alternatives=alternatives or [],
+            reason=reason or "",
         )
-    return f"Stored decision in Neo4j: {action}"
+    return decision_id
 
 
-def neo_search(entity: str, limit: int = 5) -> list:
+def neo_search(query: str, limit: int = 5) -> list:
     with _driver.session() as session:
         result = session.run(
             """
-            MATCH (p:Person)-[:MADE]->(d:Decision)
-            WHERE toLower(d.action)  CONTAINS toLower($entity)
-               OR toLower(d.subject) CONTAINS toLower($entity)
-               OR toLower(d.reason)  CONTAINS toLower($entity)
-            RETURN p.name as person, d.action as action,
-                   d.reason as reason, d.impact as impact,
-                   d.source as source, d.timestamp as timestamp
+            MATCH (d:Decision)
+            OPTIONAL MATCH (d)-[:BASED_ON]->(r:Reason)
+            OPTIONAL MATCH (d)-[:MADE_BY]->(p:Person)
+            OPTIONAL MATCH (d)-[:ALTERNATIVE]->(a:Alternative)
+            WITH d,
+                 collect(DISTINCT r.text) as reasons,
+                 collect(DISTINCT p.name) as people,
+                 collect(DISTINCT a.text) as alternatives
+            WHERE any(word IN split(toLower($q), ' ')
+                WHERE toLower(d.action)  CONTAINS word
+                   OR toLower(d.subject) CONTAINS word
+                   OR any(rr IN reasons WHERE toLower(rr) CONTAINS word)
+                   OR any(pp IN people  WHERE toLower(pp) CONTAINS word)
+            )
+            RETURN d.id as id, d.action as decision, d.subject as topic,
+                   d.impact as impact, d.source as source, d.timestamp as timestamp,
+                   reasons, people, alternatives
             LIMIT $limit
             """,
-            entity=entity, limit=limit,
-        )
-        return result.data()
-
-
-def neo_decision_chain(topic: str, limit: int = 10) -> list:
-    with _driver.session() as session:
-        result = session.run(
-            """
-            MATCH (p:Person)-[:MADE]->(d:Decision)
-            WHERE toLower(d.subject) CONTAINS toLower($topic)
-            RETURN p.name as person, d.action as action,
-                   d.reason as reason, d.timestamp as timestamp,
-                   d.source as source
-            ORDER BY d.timestamp
-            LIMIT $limit
-            """,
-            topic=topic, limit=limit,
+            q=query, limit=limit,
         )
         return result.data()

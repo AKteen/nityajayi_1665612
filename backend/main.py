@@ -51,7 +51,8 @@ async def query(req: QueryRequest):
         return {
             "question": req.question,
             "answer": result["answer"],
-            "sources": result["sources"],
+            "reasoning": result["reasoning"],
+            "source_trace": result["source_trace"],
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

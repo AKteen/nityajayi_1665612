@@ -54,20 +54,18 @@ def run_ingestion(file_bytes: bytes, filename: str, source: str = "document") ->
     # 3. Store each item into Neo4j
     from db.neo import neo_store
     for i, item in enumerate(items):
-        try:
-            neo_store(
-                subject=item.get("topic", "general"),
-                action=item.get("decision", ""),
-                reason=item.get("reason", ""),
-                source=source,
-                people=item.get("people") or [],
-                impact=item.get("impact", ""),
-                alternatives=item.get("alternatives") or [],
-                timestamp=str(item.get("timestamp") or ""),
-            )
-            logger.info(f"[NEO4J] ✓ Stored item {i+1}/{len(items)}: topic='{item.get('topic')}' decision='{item.get('decision', '')[:60]}'")
-        except Exception as e:
-            logger.error(f"[NEO4J] ✗ Failed item {i+1}: {e}")
+        decision_id = neo_store(
+            subject=item.get("topic", "general"),
+            action=item.get("decision", ""),
+            reason=item.get("reason", ""),
+            source=source,
+            people=item.get("people") or [],
+            impact=item.get("impact", ""),
+            alternatives=item.get("alternatives") or [],
+            timestamp=str(item.get("timestamp") or ""),
+        )
+        item["decision_id"] = decision_id
+        logger.info(f"[NEO4J] ✓ {i+1}/{len(items)}: '{item.get('decision', '')[:60]}'")
 
     logger.info(f"[DONE] '{filename}' → {len(items)} items stored in Neo4j")
     return {"ingested": len(items), "items": items}
