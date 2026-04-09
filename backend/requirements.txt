@@ -1,0 +1,18 @@
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+pydantic-settings
+
+# LLM / Agent
+langchain
+langgraph
+langchain-groq
+langchain-core
+langchain-community
+
+# Graph DB
+neo4j
+
+# Document parsing
+pymupdf
