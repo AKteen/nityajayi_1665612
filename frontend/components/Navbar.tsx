@@ -1,14 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Brain, Activity, Search } from "lucide-react";
+import { Brain, Activity, Search, LogIn, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
 import { checkHealth } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 export default function Navbar() {
   const path = usePathname();
+  const router = useRouter();
+  const { user } = useAuth();
   const [healthy, setHealthy] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -19,8 +23,14 @@ export default function Navbar() {
     
     checkApiHealth();
     const interval = setInterval(checkApiHealth, 10000);
+
     return () => clearInterval(interval);
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   const links = [
     { href: "/", label: "Home", icon: Brain },
@@ -57,25 +67,50 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3 text-sm bg-white/80 px-4 py-2 rounded-full shadow-md border-2 border-orange-200 cursor-pointer" onClick={async () => {
-          setHealthy(null);
-          const isHealthy = await checkHealth();
-          setHealthy(isHealthy);
-        }} title="Click to refresh API status">
-          <motion.span
-            animate={healthy ? { scale: [1, 1.2, 1] } : {}}
-            transition={{ duration: 2, repeat: Infinity }}
-            className={`w-3 h-3 rounded-full ${
-              healthy === null
-                ? "bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.6)]"
-                : healthy
-                ? "bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.7)]"
-                : "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.6)]"
-            }`}
-          />
-          <span className="text-gray-700 font-medium">
-            {healthy === null ? "checking…" : healthy ? "API online" : "API offline"}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-sm bg-white/80 px-4 py-2 rounded-full shadow-md border-2 border-orange-200 cursor-pointer" onClick={async () => {
+            setHealthy(null);
+            const isHealthy = await checkHealth();
+            setHealthy(isHealthy);
+          }} title="Click to refresh API status">
+            <motion.span
+              animate={healthy ? { scale: [1, 1.2, 1] } : {}}
+              transition={{ duration: 2, repeat: Infinity }}
+              className={`w-3 h-3 rounded-full ${
+                healthy === null
+                  ? "bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.6)]"
+                  : healthy
+                  ? "bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.7)]"
+                  : "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.6)]"
+              }`}
+            />
+            <span className="text-gray-700 font-medium">
+              {healthy === null ? "checking…" : healthy ? "API online" : "API offline"}
+            </span>
+          </div>
+
+          {user ? (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-medium shadow-md"
+            >
+              <LogOut size={16} />
+              Logout
+            </motion.button>
+          ) : (
+            <Link href="/login">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-medium shadow-md"
+              >
+                <LogIn size={16} />
+                Login
+              </motion.button>
+            </Link>
+          )}
         </div>
       </div>
     </nav>
