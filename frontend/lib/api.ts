@@ -45,12 +45,12 @@ export async function getActivityFeed(): Promise<ActivityEvent[]> {
   }
 }
 
-export async function queryKnowledge(question: string): Promise<QueryResponse> {
+export async function queryKnowledge(question: string, sourceContext?: string): Promise<QueryResponse> {
   // TODO: replace with real API — POST /query
   const res = await fetch(`${BASE}/query`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, source_context: sourceContext }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -86,6 +86,20 @@ export async function ingestFile(file: File): Promise<IngestSlackResponse> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail ?? "File ingest failed");
+  }
+  return res.json();
+}
+
+export async function ingestAudio(file: File): Promise<IngestSlackResponse & { transcript?: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BASE}/ingest/audio`, {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? "Audio ingest failed");
   }
   return res.json();
 }

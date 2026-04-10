@@ -4,9 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Loader2, RotateCcw, ChevronDown, ChevronUp,
-  Upload, FileText, CheckCircle2, XCircle, X, MessageSquare, Hash,
+  Upload, FileText, CheckCircle2, XCircle, X, MessageSquare, Hash, Mic,
 } from "lucide-react";
-import { queryKnowledge, ingestFile, ingestSlack, type QueryResponse } from "@/lib/api";
+import { queryKnowledge, ingestFile, ingestSlack, ingestAudio, type QueryResponse } from "@/lib/api";
 import SourceCard from "@/components/SourceCard";
 import AgentBadge from "@/components/AgentBadge";
 
@@ -17,7 +17,7 @@ const SUGGESTIONS = [
   "What alternatives were considered for the auth system?",
 ];
 
-type Tab = "query" | "upload" | "slack";
+type Tab = "query" | "upload" | "slack" | "audio";
 type IngestState = "idle" | "loading" | "success" | "error";
 
 export default function QueryPage() {
@@ -25,6 +25,7 @@ export default function QueryPage() {
 
   // ── shared context banner (persists across tabs) ──────────────
   const [contextLabel, setContextLabel] = useState<string | null>(null);
+  const [sourceContext, setSourceContext] = useState<string | null>(null);
 
   // ── Query state ───────────────────────────────────────────────
   const [question, setQuestion] = useState("");
@@ -51,6 +52,14 @@ export default function QueryPage() {
   const [slackResult, setSlackResult] = useState<string | null>(null);
   const [slackError, setSlackError] = useState<string | null>(null);
 
+  // ── Audio state ───────────────────────────────────────────────
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioState, setAudioState] = useState<IngestState>("idle");
+  const [audioResult, setAudioResult] = useState<string | null>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+
   // Typing animation
   useEffect(() => {
     if (!result) return;
@@ -76,7 +85,7 @@ export default function QueryPage() {
     setDisplayedAnswer("");
     setShowSources(false);
     try {
-      const data = await queryKnowledge(query);
+      const data = await queryKnowledge(query, sourceContext || undefined);
       setResult(data);
     } catch (e) {
       setQueryError(e instanceof Error ? e.message : "Something went wrong");
@@ -107,6 +116,7 @@ export default function QueryPage() {
       const data = await ingestFile(selectedFile);
       setUploadState("success");
       setContextLabel(selectedFile.name);
+      setSourceContext("document:");
       setUploadResult(
         typeof data.result === "object"
           ? JSON.stringify(data.result, null, 2)
@@ -136,6 +146,7 @@ export default function QueryPage() {
       const data = await ingestSlack(channelId.trim(), msgLimit);
       setSlackState("success");
       setContextLabel(`#${channelId.trim()}`);
+      setSourceContext("slack:");
       setSlackResult(
         typeof data.result === "object"
           ? JSON.stringify(data.result, null, 2)
@@ -153,6 +164,44 @@ export default function QueryPage() {
     setSlackState("idle");
     setSlackResult(null);
     setSlackError(null);
+  }
+
+  // ── Audio handlers ────────────────────────────────────────────
+  function handleAudioSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) setAudioFile(file);
+  }
+
+  async function handleAudioUpload() {
+    if (!audioFile) return;
+    setAudioState("loading");
+    setAudioError(null);
+    setAudioResult(null);
+    setTranscript(null);
+    try {
+      const data = await ingestAudio(audioFile);
+      setAudioState("success");
+      setContextLabel(audioFile.name);
+      setSourceContext("audio:");
+      setTranscript(data.transcript || null);
+      setAudioResult(
+        typeof data.result === "object"
+          ? JSON.stringify(data.result, null, 2)
+          : String(data.result)
+      );
+    } catch (e) {
+      setAudioState("error");
+      setAudioError(e instanceof Error ? e.message : "Audio ingest failed");
+    }
+  }
+
+  function resetAudio() {
+    setAudioFile(null);
+    setAudioState("idle");
+    setAudioResult(null);
+    setAudioError(null);
+    setTranscript(null);
+    if (audioInputRef.current) audioInputRef.current.value = "";
   }
 
   // ── Shared ingest result block ────────────────────────────────
@@ -213,6 +262,7 @@ export default function QueryPage() {
   const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "query", label: "Query", icon: Send },
     { id: "upload", label: "Upload PDF", icon: Upload },
+    { id: "audio", label: "Audio/Video", icon: Mic },
     { id: "slack", label: "Slack", icon: MessageSquare },
   ];
 
@@ -227,7 +277,7 @@ export default function QueryPage() {
       >
         <h1 className="text-3xl font-black text-gray-900 mb-2">Knowledge Engine</h1>
         <p className="text-base text-gray-700">
-          Ingest from Slack or PDF, then query across your entire organizational memory.
+          Ingest from Slack, PDF, or Audio/Video, then query across your entire organizational memory.
         </p>
       </motion.div>
 
@@ -277,11 +327,11 @@ export default function QueryPage() {
               <div className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 text-xs">
                 <CheckCircle2 size={13} />
                 <span>
-                  Querying with context from{" "}
+                  Querying ONLY from{" "}
                   <span className="font-semibold">{contextLabel}</span>
                 </span>
                 <button
-                  onClick={() => setContextLabel(null)}
+                  onClick={() => { setContextLabel(null); setSourceContext(null); }}
                   className="ml-auto text-green-400/60 hover:text-green-400"
                 >
                   <X size={12} />
@@ -560,6 +610,166 @@ export default function QueryPage() {
                 onReset={resetUpload}
                 resetLabel="Upload another"
               />
+            )}
+          </motion.div>
+        )}
+
+        {/* ── AUDIO TAB ──────────────────────────────────────────── */}
+        {tab === "audio" && (
+          <motion.div
+            key="audio"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-5"
+          >
+            <p className="text-sm text-gray-600">
+              Upload audio or video — we'll transcribe it using Whisper, then extract decisions
+              and store them in Neo4j + ChromaDB.
+            </p>
+
+            <div
+              onClick={() => audioState !== "success" && audioInputRef.current?.click()}
+              className={`rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer p-10 text-center ${
+                audioFile
+                  ? "border-green-500/50 bg-green-50"
+                  : "border-[var(--card-border)] hover:border-orange-400 hover:bg-orange-50/30"
+              }`}
+            >
+              <input
+                ref={audioInputRef}
+                type="file"
+                accept="audio/*,video/*,.mp3,.wav,.m4a,.mp4,.mov,.avi,.mkv"
+                onChange={handleAudioSelect}
+                className="hidden"
+              />
+              {audioFile ? (
+                <div className="flex flex-col items-center gap-3">
+                  <Mic size={36} className="text-green-400" />
+                  <div>
+                    <p className="text-gray-900 font-medium text-sm">{audioFile.name}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      {(audioFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  {audioState !== "success" && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); resetAudio(); }}
+                      className="text-xs text-gray-600 hover:text-red-500 transition-colors flex items-center gap-1"
+                    >
+                      <X size={12} /> Remove
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <Mic size={36} className="text-gray-500" />
+                  <div>
+                    <p className="text-gray-900 text-sm font-medium">Drop audio/video here</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      or click to browse · MP3, WAV, MP4, MOV, etc.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {audioFile && audioState === "idle" && (
+              <button
+                onClick={handleAudioUpload}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-all flex items-center justify-center gap-3 sunrise-glow shadow-xl"
+              >
+                <Mic size={20} /> Transcribe & Ingest
+              </button>
+            )}
+
+            {audioState === "loading" && (
+              <div className="space-y-3">
+                <div className="w-full py-3 rounded-xl bg-orange-500/50 text-white text-sm font-medium flex items-center justify-center gap-2">
+                  <Loader2 size={16} className="animate-spin" /> Transcribing audio…
+                </div>
+                <div className="w-full h-1 rounded-full bg-orange-100 overflow-hidden">
+                  <motion.div
+                    className="h-full bg-orange-500 rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: "90%" }}
+                    transition={{ duration: 15, ease: "easeOut" }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {audioState === "error" && audioError && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 flex items-start gap-3"
+              >
+                <XCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-red-400 font-medium">Transcription failed</p>
+                  <p className="text-xs text-red-400/70 mt-1">{audioError}</p>
+                </div>
+                <button onClick={resetAudio} className="text-red-400/60 hover:text-red-400">
+                  <RotateCcw size={14} />
+                </button>
+              </motion.div>
+            )}
+
+            {audioState === "success" && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-4"
+              >
+                <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/10 flex items-start gap-3">
+                  <CheckCircle2 size={16} className="text-green-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-green-400 font-medium">Audio transcribed & ingested</p>
+                    <p className="text-xs text-green-400/70 mt-0.5">
+                      Decisions extracted and stored in Neo4j + ChromaDB
+                    </p>
+                  </div>
+                </div>
+
+                {transcript && (
+                  <div className="glass-card rounded-xl border border-[var(--card-border)] p-4">
+                    <p className="text-xs text-gray-600 mb-2 font-medium uppercase tracking-wide">
+                      Transcript
+                    </p>
+                    <pre className="text-xs text-gray-900 whitespace-pre-wrap leading-relaxed overflow-auto max-h-48">
+                      {transcript}
+                    </pre>
+                  </div>
+                )}
+
+                {audioResult && (
+                  <div className="glass-card rounded-xl border border-[var(--card-border)] p-4">
+                    <p className="text-xs text-gray-600 mb-2 font-medium uppercase tracking-wide">
+                      Ingestion Result
+                    </p>
+                    <pre className="text-xs text-gray-900 font-mono whitespace-pre-wrap leading-relaxed overflow-auto max-h-48">
+                      {audioResult}
+                    </pre>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setTab("query")}
+                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-colors flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    <Send size={18} /> Query this now
+                  </button>
+                  <button
+                    onClick={resetAudio}
+                    className="px-4 py-2.5 rounded-xl border border-[var(--card-border)] text-gray-600 hover:text-gray-900 text-sm transition-colors"
+                  >
+                    Upload another
+                  </button>
+                </div>
+              </motion.div>
             )}
           </motion.div>
         )}

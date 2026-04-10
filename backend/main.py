@@ -62,6 +62,33 @@ async def ingest_upload(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/ingest/audio")
+async def ingest_audio(file: UploadFile = File(...)):
+    """Upload audio/video — transcribe to text, then IngestionAgent extracts and stores decisions."""
+    try:
+        file_bytes = await file.read()
+        
+        from ingestion.audio import transcribe_audio
+        raw_text = transcribe_audio(file_bytes, file.filename)
+        
+        from agents.ingestion_agent import run_ingestion_agent
+        result = run_ingestion_agent(content=raw_text, source=f"audio:{file.filename}")
+        
+        # Log activity
+        activity_store.add_event(
+            "ingest",
+            f"Audio ingested: {file.filename}",
+            f"Transcribed and processed {len(raw_text)} characters",
+            f"audio:{file.filename}"
+        )
+        
+        return {"status": "success", "result": result, "transcript": raw_text}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/ingest/slack")
 async def ingest_slack(req: SlackIngestRequest):
     """Fetch Slack messages — IngestionAgent extracts and stores decisions."""
