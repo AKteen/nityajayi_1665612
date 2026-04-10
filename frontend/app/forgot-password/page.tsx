@@ -17,15 +17,20 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/login`,
+      });
 
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      setSuccess(true);
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      } else {
+        setSuccess(true);
+        setLoading(false);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to connect to authentication service");
       setLoading(false);
     }
   };

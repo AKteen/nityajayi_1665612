@@ -27,14 +27,25 @@ export default function SignupPage() {
       return;
     }
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    try {
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+        }
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      } else {
+        setSuccess(true);
+        setTimeout(() => router.push("/login"), 2000);
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to connect to authentication service");
       setLoading(false);
-    } else {
-      setSuccess(true);
-      setTimeout(() => router.push("/login"), 2000);
     }
   };
 
