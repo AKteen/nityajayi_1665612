@@ -51,6 +51,11 @@ def extract_and_store(content: str, source: str) -> str:
         stored.append(item)
         logger.info(f"[INGEST TOOL] Stored: '{item.get('decision', '')[:60]}'")
 
+    # store raw text in Chroma
+    from db.chroma import chroma_store
+    chroma_store(content=content, source=source, metadata={"decision_count": len(stored)})
+    logger.info(f"[INGEST TOOL] Stored raw text in Chroma: {source}")
+
     return json.dumps({"ingested": len(stored), "items": stored})
 
 

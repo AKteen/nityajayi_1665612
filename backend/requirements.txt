@@ -14,8 +14,11 @@ langchain-community
 # Graph DB
 neo4j
 
-# Document parsing
-pymupdf
+# Vector DB
+langchain-chroma
+chromadb
+langchain-cohere
+cohere
 
 # Slack
 slack-sdk

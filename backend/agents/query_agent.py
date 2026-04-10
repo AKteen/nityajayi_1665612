@@ -3,10 +3,11 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from core.config import settings
 from tools.neo import search_decisions
+from tools.chroma import search_raw_memory
 
 logger = logging.getLogger(__name__)
 
-tools = [search_decisions]
+tools = [search_decisions, search_raw_memory]
 tools_map = {t.name: t for t in tools}
 
 llm = ChatGroq(
@@ -16,7 +17,9 @@ llm = ChatGroq(
 ).bind_tools(tools)
 
 SYSTEM = """You are an organizational memory assistant.
-Use search_decisions to find relevant decisions before answering.
+Use search_decisions to find structured decisions from Neo4j.
+Use search_raw_memory to find raw context, evidence and details from documents and chats.
+Always search both before answering.
 Always include in your answer: what was decided, why, who was involved, alternatives considered, and impact.
 Always cite the source of information."""
 

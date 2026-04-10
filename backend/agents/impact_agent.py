@@ -3,10 +3,11 @@ from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 from core.config import settings
 from tools.impact_tools import find_related_decisions, find_decisions_by_person
+from tools.chroma import search_raw_memory
 
 logger = logging.getLogger(__name__)
 
-tools = [find_related_decisions, find_decisions_by_person]
+tools = [find_related_decisions, find_decisions_by_person, search_raw_memory]
 tools_map = {t.name: t for t in tools}
 
 llm = ChatGroq(
@@ -19,9 +20,10 @@ SYSTEM = """You are an impact analysis agent.
 You answer "what if" and "what breaks" questions about organizational decisions.
 Steps:
 1. Use find_related_decisions to find all decisions connected to the topic
-2. Use find_decisions_by_person if a person is mentioned
-3. Analyze the chain of decisions and reason about what would be affected
-4. Give a clear impact assessment with:
+2. Use search_raw_memory to find raw context and evidence
+3. Use find_decisions_by_person if a person is mentioned
+4. Analyze the chain of decisions and reason about what would be affected
+5. Give a clear impact assessment with:
    - What would break or change
    - Who would be affected
    - What alternatives exist

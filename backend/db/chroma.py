@@ -1,26 +1,36 @@
+import uuid
 import chromadb
-from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+from langchain_cohere import CohereEmbeddings
+from core.config import settings
 
-_client = chromadb.PersistentClient(path="./chroma_db")
-_ef = DefaultEmbeddingFunction()
-_collection = _client.get_or_create_collection(
-    name="org_memory",
-    embedding_function=_ef,
+_embeddings = CohereEmbeddings(
+    cohere_api_key=settings.cohere_api_key,
+    model="embed-english-light-v3.0",
 )
+
+_client = chromadb.CloudClient(
+    api_key=settings.chroma_api_key,
+    tenant=settings.chroma_tenant,
+    database=settings.chroma_database,
+)
+
+_collection = _client.get_or_create_collection(name="notes")
 
 
 def chroma_store(content: str, source: str, metadata: dict = None) -> str:
-    import uuid
+    embedding = _embeddings.embed_documents([content])[0]
     _collection.add(
         documents=[content],
+        embeddings=[embedding],
         metadatas=[{"source": source, **(metadata or {})}],
         ids=[str(uuid.uuid4())],
     )
-    return f"Stored in Chroma from source: {source}"
+    return f"Stored in Chroma Cloud: {source}"
 
 
 def chroma_search(query: str, k: int = 4) -> list:
-    results = _collection.query(query_texts=[query], n_results=k)
+    embedding = _embeddings.embed_query(query)
+    results = _collection.query(query_embeddings=[embedding], n_results=k)
     docs = []
     for i, doc in enumerate(results["documents"][0]):
         meta = results["metadatas"][0][i] if results["metadatas"] else {}
