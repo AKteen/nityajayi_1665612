@@ -3,6 +3,7 @@ uvicorn
 python-multipart
 python-dotenv
 pydantic-settings
+pymupdf
 
 # LLM / Agent
 langchain
