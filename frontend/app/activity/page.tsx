@@ -36,8 +36,8 @@ export default function ActivityPage() {
         transition={{ duration: 0.4 }}
         className="mb-10"
       >
-        <h1 className="text-2xl font-bold text-white mb-1">Activity Feed</h1>
-        <p className="text-sm text-[var(--muted)]">
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">Activity Feed</h1>
+        <p className="text-sm text-gray-600">
           Recent ingestions, queries, and AI agent activity.
         </p>
       </motion.div>
@@ -61,23 +61,23 @@ export default function ActivityPage() {
               >
                 {/* Icon dot */}
                 <div className="relative z-10 shrink-0 w-10 h-10 rounded-full glass-card border border-[var(--card-border)] flex items-center justify-center">
-                  <Icon size={15} className="text-[var(--muted)]" />
+                  <Icon size={15} className="text-gray-600" />
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 glass-card rounded-xl p-4 border border-[var(--card-border)] hover:border-indigo-500/30 transition-colors">
+                <div className="flex-1 glass-card rounded-xl p-4 border border-[var(--card-border)] hover:border-orange-400 transition-colors">
                   <div className="flex items-start justify-between gap-3 mb-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-xs px-2 py-0.5 rounded-full border ${meta.badgeClass}`}>
                         {meta.label}
                       </span>
-                      <span className="text-sm font-medium text-white">{event.title}</span>
+                      <span className="text-sm font-medium text-gray-900">{event.title}</span>
                     </div>
-                    <span className="text-xs text-[var(--muted)] shrink-0">{timeAgo(event.timestamp)}</span>
+                    <span className="text-xs text-gray-600 shrink-0">{timeAgo(event.timestamp)}</span>
                   </div>
-                  <p className="text-xs text-[var(--muted)]">{event.description}</p>
+                  <p className="text-xs text-gray-600">{event.description}</p>
                   {event.source && (
-                    <p className="text-xs text-indigo-400/70 mt-1 font-mono">{event.source}</p>
+                    <p className="text-xs text-orange-600/70 mt-1 font-mono">{event.source}</p>
                   )}
                 </div>
               </motion.div>
@@ -87,7 +87,7 @@ export default function ActivityPage() {
       </div>
 
       {events.length === 0 && (
-        <div className="text-center text-[var(--muted)] text-sm py-20">
+        <div className="text-center text-gray-600 text-sm py-20">
           No activity yet. Start by querying or ingesting data.
         </div>
       )}

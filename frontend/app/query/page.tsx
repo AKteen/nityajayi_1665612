@@ -183,10 +183,10 @@ export default function QueryPage() {
 
         {res && (
           <div className="glass-card rounded-xl border border-[var(--card-border)] p-4">
-            <p className="text-xs text-[var(--muted)] mb-2 font-medium uppercase tracking-wide">
+            <p className="text-xs text-gray-600 mb-2 font-medium uppercase tracking-wide">
               Ingestion Result
             </p>
-            <pre className="text-xs text-[var(--foreground)] font-mono whitespace-pre-wrap leading-relaxed overflow-auto max-h-48">
+            <pre className="text-xs text-gray-900 font-mono whitespace-pre-wrap leading-relaxed overflow-auto max-h-48">
               {res}
             </pre>
           </div>
@@ -195,13 +195,13 @@ export default function QueryPage() {
         <div className="flex gap-3">
           <button
             onClick={onQuery}
-            className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-colors flex items-center justify-center gap-2 shadow-lg"
           >
-            <Send size={14} /> Query this now
+            <Send size={18} /> Query this now
           </button>
           <button
             onClick={onReset}
-            className="px-4 py-2.5 rounded-xl border border-[var(--card-border)] text-[var(--muted)] hover:text-white text-sm transition-colors"
+            className="px-4 py-2.5 rounded-xl border border-[var(--card-border)] text-gray-600 hover:text-gray-900 text-sm transition-colors"
           >
             {resetLabel}
           </button>
@@ -225,8 +225,8 @@ export default function QueryPage() {
         transition={{ duration: 0.4 }}
         className="mb-8"
       >
-        <h1 className="text-2xl font-bold text-white mb-1">Knowledge Engine</h1>
-        <p className="text-sm text-[var(--muted)]">
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Knowledge Engine</h1>
+        <p className="text-base text-gray-700">
           Ingest from Slack or PDF, then query across your entire organizational memory.
         </p>
       </motion.div>
@@ -236,21 +236,28 @@ export default function QueryPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="flex gap-1 p-1 rounded-xl glass-card border border-[var(--card-border)] mb-8 w-fit"
+        className="flex gap-2 p-1.5 rounded-2xl glass-card border-2 border-[var(--card-border)] mb-8 w-fit shadow-lg"
       >
         {TABS.map(({ id, label, icon: Icon }) => (
-          <button
+          <motion.button
             key={id}
             onClick={() => setTab(id)}
-            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
               tab === id
-                ? "bg-indigo-600 text-white shadow-lg"
-                : "text-[var(--muted)] hover:text-white"
+                ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xl"
+                : "text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50"
             }`}
           >
-            <Icon size={13} />
+            <motion.div
+              animate={tab === id ? { rotate: 360 } : {}}
+              transition={{ duration: 0.5 }}
+            >
+              <Icon size={16} />
+            </motion.div>
             {label}
-          </button>
+          </motion.button>
         ))}
       </motion.div>
 
@@ -283,37 +290,52 @@ export default function QueryPage() {
             )}
 
             {/* Search bar */}
-            <div className="relative rounded-xl border border-[var(--card-border)] glass-card glow-input transition-all duration-300">
+            <motion.div 
+              className="relative rounded-2xl border-2 border-[var(--card-border)] glass-card glow-input transition-all duration-300 shadow-lg"
+              whileHover={{ scale: 1.02 }}
+            >
               <input
                 ref={inputRef}
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                 placeholder="Why did we choose React over Vue?"
-                className="w-full bg-transparent px-5 py-4 pr-14 text-white placeholder:text-[var(--muted)] outline-none text-sm"
+                className="w-full bg-transparent px-6 py-5 pr-16 text-gray-900 placeholder:text-gray-500 outline-none text-base font-medium"
               />
-              <button
+              <motion.button
                 onClick={() => handleSubmit()}
                 disabled={loading || !question.trim()}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                whileHover={{ scale: 1.15, rotate: 10 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white shadow-lg"
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-              </button>
-            </div>
+                {loading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+              </motion.button>
+            </motion.div>
 
             {/* Suggestions */}
             {!result && !loading && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {SUGGESTIONS.map((s) => (
-                  <button
+              <motion.div 
+                className="mt-4 flex flex-wrap gap-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                {SUGGESTIONS.map((s, i) => (
+                  <motion.button
                     key={s}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => handleSubmit(s)}
-                    className="text-xs px-3 py-1.5 rounded-full border border-[var(--card-border)] text-[var(--muted)] hover:text-white hover:border-indigo-500/40 transition-colors"
+                    className="text-sm px-4 py-2 rounded-full border-2 border-[var(--card-border)] text-gray-700 hover:text-orange-600 hover:border-orange-400 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 transition-all font-medium shadow-sm"
                   >
                     {s}
-                  </button>
+                  </motion.button>
                 ))}
-              </div>
+              </motion.div>
             )}
 
             {/* Error */}
@@ -364,15 +386,15 @@ export default function QueryPage() {
                 >
                   <div className="flex items-center gap-3 flex-wrap">
                     <AgentBadge agent={result.agent_used} />
-                    <span className="text-xs text-[var(--muted)]">{result.reasoning}</span>
-                    <span className="text-xs text-[var(--muted)] ml-auto">
+                    <span className="text-xs text-gray-600">{result.reasoning}</span>
+                    <span className="text-xs text-gray-600 ml-auto">
                       {new Date(result.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
 
-                  <div className="glass-card rounded-xl p-6 border border-[var(--card-border)]">
+                  <div className="glass-card rounded-2xl p-8 border-2 border-[var(--card-border)] shadow-lg">
                     <p
-                      className={`text-sm text-[var(--foreground)] leading-relaxed whitespace-pre-wrap ${
+                      className={`text-base text-gray-900 leading-relaxed whitespace-pre-wrap font-medium ${
                         displayedAnswer.length < result.answer.length ? "cursor-blink" : ""
                       }`}
                     >
@@ -384,7 +406,7 @@ export default function QueryPage() {
                     <div>
                       <button
                         onClick={() => setShowSources((v) => !v)}
-                        className="flex items-center gap-2 text-xs text-[var(--muted)] hover:text-white transition-colors mb-3"
+                        className="flex items-center gap-2 text-xs text-gray-600 hover:text-gray-900 transition-colors mb-3"
                       >
                         {showSources ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                         {result.source_trace.length} source
@@ -409,7 +431,7 @@ export default function QueryPage() {
 
                   <button
                     onClick={() => { setResult(null); setQuestion(""); inputRef.current?.focus(); }}
-                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
+                    className="text-xs text-orange-600 hover:text-orange-500 transition-colors flex items-center gap-1"
                   >
                     <RotateCcw size={12} /> Ask another question
                   </button>
@@ -429,7 +451,7 @@ export default function QueryPage() {
             transition={{ duration: 0.2 }}
             className="space-y-5"
           >
-            <p className="text-sm text-[var(--muted)]">
+            <p className="text-sm text-gray-600">
               Upload a PDF — the IngestionAgent extracts decisions, people, and context,
               then stores them in Neo4j + ChromaDB for querying.
             </p>
@@ -442,10 +464,10 @@ export default function QueryPage() {
               onClick={() => uploadState !== "success" && fileInputRef.current?.click()}
               className={`rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer p-10 text-center ${
                 dragOver
-                  ? "border-indigo-500 bg-indigo-500/10"
+                  ? "border-orange-500 bg-orange-50"
                   : selectedFile
-                  ? "border-green-500/50 bg-green-500/5"
-                  : "border-[var(--card-border)] hover:border-indigo-500/50 hover:bg-white/[0.02]"
+                  ? "border-green-500/50 bg-green-50"
+                  : "border-[var(--card-border)] hover:border-orange-400 hover:bg-orange-50/30"
               }`}
             >
               <input
@@ -459,15 +481,15 @@ export default function QueryPage() {
                 <div className="flex flex-col items-center gap-3">
                   <FileText size={36} className="text-green-400" />
                   <div>
-                    <p className="text-white font-medium text-sm">{selectedFile.name}</p>
-                    <p className="text-xs text-[var(--muted)] mt-0.5">
+                    <p className="text-gray-900 font-medium text-sm">{selectedFile.name}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">
                       {(selectedFile.size / 1024).toFixed(1)} KB · PDF
                     </p>
                   </div>
                   {uploadState !== "success" && (
                     <button
                       onClick={(e) => { e.stopPropagation(); resetUpload(); }}
-                      className="text-xs text-[var(--muted)] hover:text-red-400 transition-colors flex items-center gap-1"
+                      className="text-xs text-gray-600 hover:text-red-500 transition-colors flex items-center gap-1"
                     >
                       <X size={12} /> Remove
                     </button>
@@ -475,10 +497,10 @@ export default function QueryPage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3">
-                  <Upload size={36} className="text-[var(--muted)]" />
+                  <Upload size={36} className="text-gray-500" />
                   <div>
-                    <p className="text-white text-sm font-medium">Drop your PDF here</p>
-                    <p className="text-xs text-[var(--muted)] mt-1">or click to browse · PDF only</p>
+                    <p className="text-gray-900 text-sm font-medium">Drop your PDF here</p>
+                    <p className="text-xs text-gray-600 mt-1">or click to browse · PDF only</p>
                   </div>
                 </div>
               )}
@@ -488,21 +510,21 @@ export default function QueryPage() {
             {selectedFile && uploadState === "idle" && (
               <button
                 onClick={handleUpload}
-                className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors flex items-center justify-center gap-2 glow-indigo"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-all flex items-center justify-center gap-3 sunrise-glow shadow-xl"
               >
-                <Upload size={16} /> Ingest PDF
+                <Upload size={20} /> Ingest PDF
               </button>
             )}
 
             {/* Progress */}
             {uploadState === "loading" && (
               <div className="space-y-3">
-                <div className="w-full py-3 rounded-xl bg-indigo-600/50 text-white text-sm font-medium flex items-center justify-center gap-2">
+                <div className="w-full py-3 rounded-xl bg-orange-500/50 text-white text-sm font-medium flex items-center justify-center gap-2">
                   <Loader2 size={16} className="animate-spin" /> Ingesting document…
                 </div>
-                <div className="w-full h-1 rounded-full bg-white/5 overflow-hidden">
+                <div className="w-full h-1 rounded-full bg-orange-100 overflow-hidden">
                   <motion.div
-                    className="h-full bg-indigo-500 rounded-full"
+                    className="h-full bg-orange-500 rounded-full"
                     initial={{ width: "0%" }}
                     animate={{ width: "90%" }}
                     transition={{ duration: 8, ease: "easeOut" }}
@@ -552,7 +574,7 @@ export default function QueryPage() {
             transition={{ duration: 0.2 }}
             className="space-y-5"
           >
-            <p className="text-sm text-[var(--muted)]">
+            <p className="text-sm text-gray-600">
               Fetch messages from a Slack channel — the IngestionAgent extracts decisions
               and stores them in Neo4j + ChromaDB.
             </p>
@@ -562,13 +584,13 @@ export default function QueryPage() {
 
               {/* Channel ID */}
               <div className="space-y-2">
-                <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">
+                <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                   Channel ID
                 </label>
                 <div className="relative">
                   <Hash
                     size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
                   />
                   <input
                     value={channelId}
@@ -576,10 +598,10 @@ export default function QueryPage() {
                     onKeyDown={(e) => e.key === "Enter" && handleSlackIngest()}
                     placeholder="C0123456789"
                     disabled={slackState === "loading" || slackState === "success"}
-                    className="w-full bg-transparent border border-[var(--card-border)] rounded-lg pl-8 pr-4 py-2.5 text-white placeholder:text-[var(--muted)] outline-none text-sm focus:border-indigo-500/60 transition-colors disabled:opacity-50"
+                    className="w-full bg-transparent border border-[var(--card-border)] rounded-lg pl-8 pr-4 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none text-sm focus:border-orange-500 transition-colors disabled:opacity-50"
                   />
                 </div>
-                <p className="text-xs text-[var(--muted)]">
+                <p className="text-xs text-gray-600">
                   Find it in Slack: right-click channel → View channel details → Channel ID at the bottom.
                 </p>
               </div>
@@ -587,10 +609,10 @@ export default function QueryPage() {
               {/* Message limit */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">
+                  <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                     Message Limit
                   </label>
-                  <span className="text-xs font-mono text-indigo-400">{msgLimit}</span>
+                  <span className="text-xs font-mono text-orange-600">{msgLimit}</span>
                 </div>
                 <input
                   type="range"
@@ -600,9 +622,9 @@ export default function QueryPage() {
                   value={msgLimit}
                   onChange={(e) => setMsgLimit(Number(e.target.value))}
                   disabled={slackState === "loading" || slackState === "success"}
-                  className="w-full accent-indigo-500 disabled:opacity-50"
+                  className="w-full accent-orange-500 disabled:opacity-50"
                 />
-                <div className="flex justify-between text-xs text-[var(--muted)]">
+                <div className="flex justify-between text-xs text-gray-600">
                   <span>10</span>
                   <span>500</span>
                 </div>
@@ -613,16 +635,16 @@ export default function QueryPage() {
                 <button
                   onClick={handleSlackIngest}
                   disabled={!channelId.trim() || slackState === "loading"}
-                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors flex items-center justify-center gap-2 glow-indigo"
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-white text-base font-bold transition-colors flex items-center justify-center gap-3 sunrise-glow shadow-xl"
                 >
                   {slackState === "loading" ? (
                     <>
-                      <Loader2 size={16} className="animate-spin" />
+                      <Loader2 size={20} className="animate-spin" />
                       Fetching & ingesting…
                     </>
                   ) : (
                     <>
-                      <MessageSquare size={16} />
+                      <MessageSquare size={20} />
                       Ingest Channel
                     </>
                   )}
@@ -631,9 +653,9 @@ export default function QueryPage() {
 
               {/* Progress bar */}
               {slackState === "loading" && (
-                <div className="w-full h-1 rounded-full bg-white/5 overflow-hidden">
+                <div className="w-full h-1 rounded-full bg-orange-100 overflow-hidden">
                   <motion.div
-                    className="h-full bg-indigo-500 rounded-full"
+                    className="h-full bg-orange-500 rounded-full"
                     initial={{ width: "0%" }}
                     animate={{ width: "85%" }}
                     transition={{ duration: 10, ease: "easeOut" }}

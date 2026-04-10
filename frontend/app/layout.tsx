@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="gradient-bg min-h-screen">
         <Navbar />
-        <main className="pt-14">{children}</main>
+        <main className="pt-16">{children}</main>
       </body>
     </html>
   );
