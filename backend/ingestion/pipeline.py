@@ -5,6 +5,8 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from core.config import settings
 from ingestion.excel import extract_text_from_excel
+from ingestion.image import extract_text_from_image
+from ingestion.audio import transcribe_audio
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +36,14 @@ chain = PROMPT | llm
 
 
 def _structure_and_store(raw_text: str, source: str) -> dict:
+    # Store raw text in ChromaDB first
+    from db.chroma import chroma_store
+    try:
+        chroma_store(content=raw_text, source=source)
+        logger.info(f"[CHROMA] ✓ Stored raw text: {source}")
+    except Exception as e:
+        logger.error(f"[CHROMA] ✗ Failed: {e}")
+
     response = chain.invoke({"content": raw_text})
     raw = response.content.strip()
     if raw.startswith("```"):
@@ -65,20 +75,24 @@ def _structure_and_store(raw_text: str, source: str) -> dict:
 
 
 def run_ingestion(file_bytes: bytes, filename: str, source: str = "document") -> dict:
-    # Detect file type by extension
+    """Universal ingestion pipeline for PDF, Excel, Images, Audio/Video."""
     file_ext = filename.lower().split('.')[-1]
     
     if file_ext in ['xlsx', 'xls']:
-        # Excel file
         raw_text = extract_text_from_excel(file_bytes, filename)
         logger.info(f"[EXTRACT] Excel '{filename}' → {len(raw_text)} chars")
     elif file_ext == 'pdf':
-        # PDF file
         doc = fitz.open(stream=file_bytes, filetype="pdf")
         raw_text = "\n".join(page.get_text() for page in doc)
         logger.info(f"[EXTRACT] PDF '{filename}' → {len(raw_text)} chars")
+    elif file_ext in ['png', 'jpg', 'jpeg', 'gif', 'webp']:
+        raw_text = extract_text_from_image(file_bytes, filename)
+        logger.info(f"[EXTRACT] Image '{filename}' → {len(raw_text)} chars")
+    elif file_ext in ['mp3', 'wav', 'm4a', 'mp4', 'mov', 'avi', 'mkv', 'flac', 'ogg', 'webm']:
+        raw_text = transcribe_audio(file_bytes, filename)
+        logger.info(f"[EXTRACT] Audio/Video '{filename}' → {len(raw_text)} chars")
     else:
-        raise ValueError(f"Unsupported file type: {file_ext}")
+        raise ValueError(f"Unsupported file type: {file_ext}. Supported: PDF, Excel, Images, Audio/Video")
     
     return _structure_and_store(raw_text, source)
 

@@ -1,11 +1,13 @@
+from typing import Optional
 from langchain.tools import tool
 from db.neo import neo_impact_search, neo_search as _neo_search
 
 
 @tool
-def find_related_decisions(topic: str) -> str:
-    """Find all decisions related to a topic, system, or person. Use to understand what is connected before simulating impact."""
-    records = neo_impact_search(topic)
+def find_related_decisions(topic: str, source_filter: Optional[str] = None) -> str:
+    """Find all decisions related to a topic, system, or person. Use to understand what is connected before simulating impact.
+    Pass source_filter to restrict results to a specific ingested file or channel."""
+    records = neo_impact_search(topic, source_filter=source_filter)
     if not records:
         return f"No related decisions found for: {topic}"
     output = []
@@ -23,9 +25,10 @@ def find_related_decisions(topic: str) -> str:
 
 
 @tool
-def find_decisions_by_person(person_name: str) -> str:
-    """Find all decisions made by or involving a specific person."""
-    records = _neo_search(person_name)
+def find_decisions_by_person(person_name: str, source_filter: Optional[str] = None) -> str:
+    """Find all decisions made by or involving a specific person.
+    Pass source_filter to restrict results to a specific ingested file or channel."""
+    records = _neo_search(person_name, source_filter=source_filter)
     if not records:
         return f"No decisions found involving: {person_name}"
     output = []

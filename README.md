@@ -10,6 +10,7 @@ Built at **Sunhacks** — a full-stack agentic AI system that ingests knowledge 
 
 - **Ingest** — Upload PDFs or pull Slack channel history. An AI agent extracts structured decisions, people, reasons, and alternatives automatically.
 - **Store** — Decisions are stored as a knowledge graph in Neo4j and as semantic vectors in ChromaDB.
+- **Smart Upload** — Automatic duplicate detection prevents re-processing. Select from existing files or upload new ones.
 - **Query** — Ask anything in plain English. A router agent decides whether to run a **Query Agent** (history, decisions, people) or an **Impact Agent** (what-if, what breaks, risk analysis).
 - **Reason** — Powered by `llama-3.3-70b-versatile` via Groq. Every answer includes sources, reasoning, and tool traces.
 
@@ -172,9 +173,11 @@ npm run dev
 | Method | Endpoint | Body | Description |
 |---|---|---|---|
 | `GET` | `/health` | — | Health check |
-| `POST` | `/query` | `{ question }` | Query the knowledge base |
-| `POST` | `/ingest/upload` | `multipart/form-data` file | Ingest a PDF |
+| `POST` | `/query` | `{ question, source_filter? }` | Query the knowledge base |
+| `POST` | `/ingest/upload` | `multipart/form-data` file | Ingest a file (with duplicate detection) |
 | `POST` | `/ingest/slack` | `{ channel_id, limit }` | Ingest a Slack channel |
+| `GET` | `/files/list` | — | List all uploaded files |
+| `GET` | `/files/check/{source}` | — | Check if file exists by source |
 
 ### Query Response Shape
 
@@ -220,7 +223,7 @@ User question
 
 | Page | Route | Description |
 |---|---|---|
-| Home | `/` | Hero section, feature cards, animated gradient |
+| Home | `/` | Hero section, feature cards, file selection dialog |
 | Knowledge Engine | `/query` | Query · Upload PDF · Slack ingest tabs |
 | Activity | `/activity` | Animated timeline of recent events |
 

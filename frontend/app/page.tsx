@@ -2,14 +2,19 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   ArrowRight, Database, Brain, Network, 
-  MessageSquare, FileText, Mic, FileSpreadsheet, Search, Zap, GitBranch
+  MessageSquare, FileText, Mic, FileSpreadsheet, Search, Zap, GitBranch, Upload, FolderOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Aurora from "@/components/Aurora";
+import FileSelector from "@/components/FileSelector";
 
 const features = [
   {
@@ -18,7 +23,6 @@ const features = [
     description: "Ingest channel conversations and extract structured decisions, people, and context automatically.",
     delay: 0.1,
   },
-  {
   {
     icon: FileText,
     title: "PDF Documents",
@@ -72,6 +76,21 @@ const techStack = [
 export default function HomePage() {
   const { scrollYProgress } = useScroll();
   const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
+  const router = useRouter();
+  const [selectedSource, setSelectedSource] = useState<string>("");
+  const [selectedFilename, setSelectedFilename] = useState<string>("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleFileSelect = (source: string, filename: string) => {
+    setSelectedSource(source);
+    setSelectedFilename(filename);
+  };
+
+  const handleQueryExisting = () => {
+    if (selectedSource) {
+      router.push(`/query?source=${encodeURIComponent(selectedSource)}&filename=${encodeURIComponent(selectedFilename)}`);
+    }
+  };
 
   return (
     <div className="relative overflow-x-hidden">
@@ -123,17 +142,50 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-wrap items-center justify-center gap-4"
           >
-            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100 shadow-lg">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 shadow-lg">
+                  <FolderOpen size={20} />
+                  Select Existing File
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl h-[600px] flex flex-col bg-gradient-to-br from-white via-blue-50 to-cyan-50">
+                <DialogHeader className="flex-shrink-0 pb-4">
+                  <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                    Select from Existing Files
+                  </DialogTitle>
+                  <DialogDescription className="text-base text-gray-700">
+                    Choose a file you've already uploaded to query it directly
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex-1 overflow-hidden bg-white rounded-xl p-4 shadow-inner" style={{ minHeight: 0 }}>
+                  <FileSelector onSelectFile={handleFileSelect} selectedSource={selectedSource} />
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-blue-200 flex-shrink-0">
+                  <Button variant="outline" onClick={() => setDialogOpen(false)} className="px-6 border-blue-300 hover:bg-blue-50">
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      handleQueryExisting();
+                      setDialogOpen(false);
+                    }}
+                    disabled={!selectedSource}
+                    className="px-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 shadow-lg"
+                  >
+                    Query Selected File
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Button asChild size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/20">
               <Link href="/query">
-                Start Querying
-                <motion.div
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  <ArrowRight size={20} />
-                </motion.div>
+                <Upload size={20} />
+                Upload New File
               </Link>
             </Button>
+
             <Button asChild size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/20">
               <Link href="/activity">
                 View Activity

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { MessageSquare, Search, Zap, FileText, Mail, RefreshCw } from "lucide-react";
 import { getActivityFeed, type ActivityEvent } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 const eventMeta: Record<ActivityEvent["type"], { icon: React.ElementType; badgeClass: string; label: string }> = {
   slack: { icon: MessageSquare, badgeClass: "badge-slack", label: "Slack" },
@@ -22,13 +23,14 @@ function timeAgo(iso: string) {
 }
 
 export default function ActivityPage() {
+  const { user } = useAuth();
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   const fetchEvents = useCallback(async () => {
     try {
-      const newEvents = await getActivityFeed();
+      const newEvents = await getActivityFeed(user?.id);
       setEvents(newEvents);
       setLastRefresh(new Date());
     } catch (error) {
@@ -36,7 +38,7 @@ export default function ActivityPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     fetchEvents();

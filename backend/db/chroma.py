@@ -17,22 +17,47 @@ _client = chromadb.CloudClient(
 _collection = _client.get_or_create_collection(name="notes")
 
 
+def _chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> list[str]:
+    """Split text into overlapping chunks."""
+    if len(text) <= chunk_size:
+        return [text]
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        chunks.append(text[start:end])
+        start += chunk_size - overlap
+    return chunks
+
+
 def chroma_store(content: str, source: str, metadata: dict = None) -> str:
-    embedding = _embeddings.embed_documents([content])[0]
+    chunks = _chunk_text(content)
+    embeddings = _embeddings.embed_documents(chunks)
     _collection.add(
-        documents=[content],
-        embeddings=[embedding],
-        metadatas=[{"source": source, **(metadata or {})}],
-        ids=[str(uuid.uuid4())],
+        documents=chunks,
+        embeddings=embeddings,
+        metadatas=[{"source": source, **(metadata or {})} for _ in chunks],
+        ids=[str(uuid.uuid4()) for _ in chunks],
     )
-    return f"Stored in Chroma Cloud: {source}"
+    return f"Stored {len(chunks)} chunks in Chroma Cloud: {source}"
 
 
-def chroma_search(query: str, k: int = 4) -> list:
+def chroma_search(query: str, k: int = 4, source_filter: str = None) -> list:
     embedding = _embeddings.embed_query(query)
-    results = _collection.query(query_embeddings=[embedding], n_results=k)
+    where = {"source": {"$eq": source_filter}} if source_filter else None
+    results = _collection.query(
+        query_embeddings=[embedding],
+        n_results=k,
+        where=where,
+    )
     docs = []
+    seen = set()
     for i, doc in enumerate(results["documents"][0]):
+        # Deduplicate by first 200 chars
+        key = doc[:200]
+        if key in seen:
+            continue
+        seen.add(key)
         meta = results["metadatas"][0][i] if results["metadatas"] else {}
         docs.append({"page_content": doc, "metadata": meta})
     return docs

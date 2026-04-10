@@ -75,7 +75,7 @@ def neo_store(
                 raise
 
 
-def neo_impact_search(topic: str, limit: int = 10) -> list:
+def neo_impact_search(topic: str, limit: int = 10, source_filter: str = None) -> list:
     """Find all decisions related to a topic and their downstream impacts."""
     with _driver.session() as session:
         result = session.run(
@@ -88,7 +88,8 @@ def neo_impact_search(topic: str, limit: int = 10) -> list:
                  collect(DISTINCT r.text) as reasons,
                  collect(DISTINCT p.name) as people,
                  collect(DISTINCT a.text) as alternatives
-            WHERE any(word IN split(toLower($topic), ' ')
+            WHERE ($source_filter IS NULL OR d.source = $source_filter)
+              AND any(word IN split(toLower($topic), ' ')
                 WHERE toLower(d.action)  CONTAINS word
                    OR toLower(d.subject) CONTAINS word
                    OR any(rr IN reasons WHERE toLower(rr) CONTAINS word)
@@ -98,12 +99,12 @@ def neo_impact_search(topic: str, limit: int = 10) -> list:
                    reasons, people, alternatives
             LIMIT $limit
             """,
-            topic=topic, limit=limit,
+            topic=topic, limit=limit, source_filter=source_filter,
         )
         return result.data()
 
 
-def neo_search(query: str, limit: int = 5) -> list:
+def neo_search(query: str, limit: int = 5, source_filter: str = None) -> list:
     with _driver.session() as session:
         result = session.run(
             """
@@ -115,7 +116,8 @@ def neo_search(query: str, limit: int = 5) -> list:
                  collect(DISTINCT r.text) as reasons,
                  collect(DISTINCT p.name) as people,
                  collect(DISTINCT a.text) as alternatives
-            WHERE any(word IN split(toLower($q), ' ')
+            WHERE ($source_filter IS NULL OR d.source = $source_filter)
+              AND any(word IN split(toLower($q), ' ')
                 WHERE toLower(d.action)  CONTAINS word
                    OR toLower(d.subject) CONTAINS word
                    OR any(rr IN reasons WHERE toLower(rr) CONTAINS word)
@@ -126,6 +128,6 @@ def neo_search(query: str, limit: int = 5) -> list:
                    reasons, people, alternatives
             LIMIT $limit
             """,
-            q=query, limit=limit,
+            q=query, limit=limit, source_filter=source_filter,
         )
         return result.data()

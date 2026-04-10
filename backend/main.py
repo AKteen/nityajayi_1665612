@@ -1,8 +1,10 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 import uvicorn
 from activity_store import activity_store
+from db.file_registry import register_file, check_file_exists, list_all_files, get_file_by_source, _compute_hash
 
 app = FastAPI(title="Org Memory API")
 
@@ -17,6 +19,8 @@ app.add_middleware(
 
 class QueryRequest(BaseModel):
     question: str
+    source_filter: str = None
+    user_id: str = None
 
 class SlackIngestRequest(BaseModel):
     channel_id: str
@@ -25,9 +29,9 @@ class SlackIngestRequest(BaseModel):
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
 @app.get("/activity")
-async def get_activity(limit: int = 50):
-    """Get recent activity events."""
-    return activity_store.get_events(limit)
+async def get_activity(limit: int = 50, user_id: Optional[str] = None):
+    """Get recent activity events for a specific user."""
+    return activity_store.get_events(limit, user_id=user_id)
 
 
 @app.get("/health")
@@ -35,39 +39,75 @@ async def health():
     return {"status": "running"}
 
 
+@app.get("/files/list")
+async def list_files():
+    """List all uploaded files from Neo4j registry."""
+    try:
+        files = list_all_files()
+        return {"status": "success", "files": files}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/files/check/{source}")
+async def check_file_by_source(source: str):
+    """Check if a file exists by source identifier."""
+    try:
+        file_info = get_file_by_source(source)
+        if file_info:
+            return {"exists": True, "file": file_info}
+        return {"exists": False}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/ingest/upload")
-async def ingest_upload(file: UploadFile = File(...)):
-    """Upload a PDF or Excel file — IngestionAgent extracts and stores decisions."""
+async def ingest_upload(file: UploadFile = File(...), user_id: Optional[str] = Header(None)):
+    """Universal upload endpoint - supports PDF, Excel, Images, Audio/Video."""
     try:
         file_bytes = await file.read()
         filename = file.filename or "unknown"
         file_ext = filename.lower().split('.')[-1]
-        
-        # Validate file type
-        if file_ext not in ['pdf', 'xlsx', 'xls']:
-            raise ValueError(f"Unsupported file type. Please upload PDF or Excel files (.pdf, .xlsx, .xls)")
-        
-        # Extract text based on file type
-        if file_ext in ['xlsx', 'xls']:
-            from ingestion.excel import extract_text_from_excel
-            raw_text = extract_text_from_excel(file_bytes, filename)
-        else:  # pdf
-            import fitz
-            doc = fitz.open(stream=file_bytes, filetype="pdf")
-            raw_text = "\n".join(page.get_text() for page in doc)
 
-        from agents.ingestion_agent import run_ingestion_agent
-        result = run_ingestion_agent(content=raw_text, source=f"document:{filename}")
-        
-        # Log activity
+        supported_exts = [
+            'pdf', 'xlsx', 'xls',
+            'png', 'jpg', 'jpeg', 'gif', 'webp',
+            'mp3', 'wav', 'm4a', 'mp4', 'mov', 'avi', 'mkv', 'flac', 'ogg', 'webm'
+        ]
+        if file_ext not in supported_exts:
+            raise ValueError(
+                f"Unsupported file type: .{file_ext}. "
+                f"Supported: PDF, Excel (.xlsx, .xls), Images (.png, .jpg, .jpeg, .gif, .webp), "
+                f"Audio/Video (.mp3, .wav, .m4a, .mp4, .mov, .avi, .mkv, etc.)"
+            )
+
+        # Check if file already exists
+        file_hash = _compute_hash(file_bytes)
+        existing = check_file_exists(file_hash)
+        if existing:
+            return {
+                "status": "already_exists",
+                "message": f"File '{existing['filename']}' already uploaded on {existing['uploaded_at']}",
+                "file": existing
+            }
+
+        # Process new file
+        source = f"document:{filename}"
+        from ingestion.pipeline import run_ingestion
+        result = run_ingestion(file_bytes, filename, source)
+
+        # Register file in Neo4j
+        register_file(filename, file_hash, file_ext, source)
+
         activity_store.add_event(
             "ingest",
-            f"Document ingested: {filename}",
-            f"Ingestion agent processed {len(raw_text)} characters",
-            f"document:{filename}"
+            f"File ingested: {filename}",
+            f"Processed {len(file_bytes)} bytes",
+            source,
+            user_id=user_id
         )
-        
-        return {"status": "success", "result": result}
+
+        return {"status": "success", "result": result, "source": source}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -76,25 +116,25 @@ async def ingest_upload(file: UploadFile = File(...)):
 
 @app.post("/ingest/audio")
 async def ingest_audio(file: UploadFile = File(...)):
-    """Upload audio/video — transcribe to text, then IngestionAgent extracts and stores decisions."""
+    """Upload audio/video — transcribe using Whisper, then extract and store decisions."""
     try:
         file_bytes = await file.read()
-        
+        filename = file.filename or "unknown"
+
         from ingestion.audio import transcribe_audio
-        raw_text = transcribe_audio(file_bytes, file.filename)
-        
-        from agents.ingestion_agent import run_ingestion_agent
-        result = run_ingestion_agent(content=raw_text, source=f"audio:{file.filename}")
-        
-        # Log activity
+        transcript = transcribe_audio(file_bytes, filename)
+
+        from ingestion.pipeline import run_ingestion_from_text
+        result = run_ingestion_from_text(transcript, f"audio:{filename}")
+
         activity_store.add_event(
             "ingest",
-            f"Audio ingested: {file.filename}",
-            f"Transcribed and processed {len(raw_text)} characters",
-            f"audio:{file.filename}"
+            f"Audio ingested: {filename}",
+            f"Transcribed and processed {len(transcript)} characters",
+            f"audio:{filename}"
         )
-        
-        return {"status": "success", "result": result, "transcript": raw_text}
+
+        return {"status": "success", "result": result, "transcript": transcript}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -103,25 +143,25 @@ async def ingest_audio(file: UploadFile = File(...)):
 
 @app.post("/ingest/image")
 async def ingest_image(file: UploadFile = File(...)):
-    """Upload image — OCR to text using Groq Vision, then IngestionAgent extracts and stores decisions."""
+    """Upload image — OCR using Groq Vision, then extract and store decisions."""
     try:
         file_bytes = await file.read()
-        
+        filename = file.filename or "unknown"
+
         from ingestion.image import extract_text_from_image
-        raw_text = extract_text_from_image(file_bytes, file.filename)
-        
-        from agents.ingestion_agent import run_ingestion_agent
-        result = run_ingestion_agent(content=raw_text, source=f"image:{file.filename}")
-        
-        # Log activity
+        extracted_text = extract_text_from_image(file_bytes, filename)
+
+        from ingestion.pipeline import run_ingestion_from_text
+        result = run_ingestion_from_text(extracted_text, f"image:{filename}")
+
         activity_store.add_event(
             "ingest",
-            f"Image ingested: {file.filename}",
-            f"OCR extracted and processed {len(raw_text)} characters",
-            f"image:{file.filename}"
+            f"Image ingested: {filename}",
+            f"OCR extracted and processed {len(extracted_text)} characters",
+            f"image:{filename}"
         )
-        
-        return {"status": "success", "result": result, "extracted_text": raw_text}
+
+        return {"status": "success", "result": result, "extracted_text": extracted_text}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -129,7 +169,7 @@ async def ingest_image(file: UploadFile = File(...)):
 
 
 @app.post("/ingest/slack")
-async def ingest_slack(req: SlackIngestRequest):
+async def ingest_slack(req: SlackIngestRequest, user_id: Optional[str] = Header(None)):
     """Fetch Slack messages — IngestionAgent extracts and stores decisions."""
     try:
         from ingestion.slack import fetch_slack_text
@@ -143,7 +183,8 @@ async def ingest_slack(req: SlackIngestRequest):
             "slack",
             f"Slack ingestion: #{req.channel_id}",
             f"Processed {req.limit} messages from channel",
-            f"slack:{req.channel_id}"
+            f"slack:{req.channel_id}",
+            user_id=user_id
         )
         
         return {"status": "success", "result": result}
@@ -160,7 +201,7 @@ async def query(req: QueryRequest):
     """Ask anything — router decides which agent handles it."""
     try:
         from agents.router import run
-        result = run(req.question)
+        result = run(req.question, source_filter=req.source_filter)
         
         # Log activity
         agent_type = result["agent_used"].lower()
@@ -168,7 +209,8 @@ async def query(req: QueryRequest):
             agent_type,
             f"Query: {req.question[:50]}{'...' if len(req.question) > 50 else ''}",
             f"{result['agent_used']} agent responded with {len(result['answer'])} characters",
-            "Neo4j + ChromaDB" if agent_type == "query" else "Neo4j"
+            "Neo4j + ChromaDB" if agent_type == "query" else "Neo4j",
+            user_id=req.user_id
         )
         
         return {

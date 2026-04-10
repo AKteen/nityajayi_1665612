@@ -1,11 +1,13 @@
+from typing import Optional
 from langchain.tools import tool
 from db.neo import neo_search
 
 
 @tool
-def search_decisions(query: str) -> str:
-    """Search organizational memory for decisions, reasons, people and alternatives related to a topic or question."""
-    records = neo_search(query)
+def search_decisions(query: str, source_filter: Optional[str] = None) -> str:
+    """Search organizational memory for decisions, reasons, people and alternatives related to a topic or question.
+    Pass source_filter to restrict results to a specific ingested file or channel."""
+    records = neo_search(query, source_filter=source_filter)
     if not records:
         return f"No decisions found for: {query}"
     output = []

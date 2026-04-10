@@ -40,7 +40,7 @@ def run_ingestion_agent(content: str, source: str) -> dict:
 
         for tc in response.tool_calls:
             logger.info(f"[INGESTION AGENT] → tool: {tc['name']}")
-            args = tc["args"]
+            args = dict(tc["args"]) if tc["args"] else {}
             if tc["name"] == "extract_and_store":
                 args["source"] = source
             result = tools_map[tc["name"]].invoke(args)

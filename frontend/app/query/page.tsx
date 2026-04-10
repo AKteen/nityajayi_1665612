@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Loader2, RotateCcw, ChevronDown, ChevronUp,
   Upload, FileText, CheckCircle2, XCircle, X, MessageSquare, Hash, Mic, FileSpreadsheet, Image as ImageIcon,
 } from "lucide-react";
 import { queryKnowledge, ingestFile, ingestSlack, ingestAudio, ingestExcel, ingestImage, type QueryResponse } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import SourceCard from "@/components/SourceCard";
 import AgentBadge from "@/components/AgentBadge";
 
@@ -21,11 +23,26 @@ type Tab = "query" | "upload" | "excel" | "audio" | "image" | "slack";
 type IngestState = "idle" | "loading" | "success" | "error";
 
 export default function QueryPage() {
+  const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("query");
 
   // ── shared context banner (persists across tabs) ──────────────
   const [contextLabel, setContextLabel] = useState<string | null>(null);
   const [sourceContext, setSourceContext] = useState<string | null>(null);
+
+  // Load context from URL params on mount
+  useEffect(() => {
+    const source = searchParams.get("source");
+    const filename = searchParams.get("filename");
+    if (source && filename) {
+      setSourceContext(source);
+      const icon = source.startsWith("document:") ? "📄" : 
+                   source.startsWith("audio:") ? "🎵" :
+                   source.startsWith("image:") ? "🖼️" : "📁";
+      setContextLabel(`${icon} ${filename}`);
+    }
+  }, [searchParams]);
 
   // ── Query state ───────────────────────────────────────────────
   const [question, setQuestion] = useState("");
@@ -101,7 +118,7 @@ export default function QueryPage() {
     setDisplayedAnswer("");
     setShowSources(false);
     try {
-      const data = await queryKnowledge(query, sourceContext || undefined);
+      const data = await queryKnowledge(query, sourceContext || undefined, user?.id);
       setResult(data);
     } catch (e) {
       setQueryError(e instanceof Error ? e.message : "Something went wrong");
@@ -129,10 +146,10 @@ export default function QueryPage() {
     setUploadError(null);
     setUploadResult(null);
     try {
-      const data = await ingestFile(selectedFile);
+      const data = await ingestFile(selectedFile, user?.id);
       setUploadState("success");
-      setContextLabel(selectedFile.name);
-      setSourceContext("document:");
+      setContextLabel(`📄 ${selectedFile.name}`);
+      setSourceContext(`document:${selectedFile.name}`);
       setUploadResult(
         typeof data.result === "object"
           ? JSON.stringify(data.result, null, 2)
@@ -149,6 +166,8 @@ export default function QueryPage() {
     setUploadState("idle");
     setUploadResult(null);
     setUploadError(null);
+    setSourceContext(null);
+    setContextLabel(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -174,8 +193,8 @@ export default function QueryPage() {
     try {
       const data = await ingestExcel(selectedExcel);
       setExcelState("success");
-      setContextLabel(selectedExcel.name);
-      setSourceContext("document:");
+      setContextLabel(`📊 ${selectedExcel.name}`);
+      setSourceContext(`document:${selectedExcel.name}`);
       setExcelResult(
         typeof data.result === "object"
           ? JSON.stringify(data.result, null, 2)
@@ -192,6 +211,8 @@ export default function QueryPage() {
     setExcelState("idle");
     setExcelResult(null);
     setExcelError(null);
+    setSourceContext(null);
+    setContextLabel(null);
     if (excelInputRef.current) excelInputRef.current.value = "";
   }
 
@@ -202,10 +223,10 @@ export default function QueryPage() {
     setSlackError(null);
     setSlackResult(null);
     try {
-      const data = await ingestSlack(channelId.trim(), msgLimit);
+      const data = await ingestSlack(channelId.trim(), msgLimit, user?.id);
       setSlackState("success");
-      setContextLabel(`#${channelId.trim()}`);
-      setSourceContext("slack:");
+      setContextLabel(`💬 #${channelId.trim()}`);
+      setSourceContext(`slack:${channelId.trim()}`);
       setSlackResult(
         typeof data.result === "object"
           ? JSON.stringify(data.result, null, 2)
@@ -223,6 +244,8 @@ export default function QueryPage() {
     setSlackState("idle");
     setSlackResult(null);
     setSlackError(null);
+    setSourceContext(null);
+    setContextLabel(null);
   }
 
   // ── Audio handlers ────────────────────────────────────────────
@@ -240,8 +263,8 @@ export default function QueryPage() {
     try {
       const data = await ingestAudio(audioFile);
       setAudioState("success");
-      setContextLabel(audioFile.name);
-      setSourceContext("audio:");
+      setContextLabel(`🎵 ${audioFile.name}`);
+      setSourceContext(`audio:${audioFile.name}`);
       setTranscript(data.transcript || null);
       setAudioResult(
         typeof data.result === "object"
@@ -260,6 +283,8 @@ export default function QueryPage() {
     setAudioResult(null);
     setAudioError(null);
     setTranscript(null);
+    setSourceContext(null);
+    setContextLabel(null);
     if (audioInputRef.current) audioInputRef.current.value = "";
   }
 
@@ -278,8 +303,8 @@ export default function QueryPage() {
     try {
       const data = await ingestImage(imageFile);
       setImageState("success");
-      setContextLabel(imageFile.name);
-      setSourceContext("image:");
+      setContextLabel(`🖼️ ${imageFile.name}`);
+      setSourceContext(`image:${imageFile.name}`);
       setExtractedText(data.extracted_text || null);
       setImageResult(
         typeof data.result === "object"
@@ -298,6 +323,8 @@ export default function QueryPage() {
     setImageResult(null);
     setImageError(null);
     setExtractedText(null);
+    setSourceContext(null);
+    setContextLabel(null);
     if (imageInputRef.current) imageInputRef.current.value = "";
   }
 
@@ -356,6 +383,15 @@ export default function QueryPage() {
     );
   }
 
+  function switchTab(id: Tab) {
+    // Only clear context when switching TO an ingest tab (not when going to query)
+    if (id !== "query") {
+      setSourceContext(null);
+      setContextLabel(null);
+    }
+    setTab(id);
+  }
+
   const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "query", label: "Query", icon: Send },
     { id: "upload", label: "Upload PDF", icon: Upload },
@@ -390,7 +426,7 @@ export default function QueryPage() {
         {TABS.map(({ id, label, icon: Icon }) => (
           <motion.button
             key={id}
-            onClick={() => setTab(id)}
+            onClick={() => switchTab(id)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
@@ -705,7 +741,7 @@ export default function QueryPage() {
               <IngestSuccess
                 label="Document ingested successfully"
                 result={uploadResult}
-                onQuery={() => setTab("query")}
+                onQuery={() => switchTab("query")}
                 onReset={resetUpload}
                 resetLabel="Upload another"
               />
@@ -828,7 +864,7 @@ export default function QueryPage() {
               <IngestSuccess
                 label="Excel ingested successfully"
                 result={excelResult}
-                onQuery={() => setTab("query")}
+                onQuery={() => switchTab("query")}
                 onReset={resetExcel}
                 resetLabel="Upload another"
               />
@@ -940,58 +976,13 @@ export default function QueryPage() {
             )}
 
             {audioState === "success" && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-4"
-              >
-                <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/10 flex items-start gap-3">
-                  <CheckCircle2 size={16} className="text-green-400 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-green-400 font-medium">Audio transcribed & ingested</p>
-                    <p className="text-xs text-green-400/70 mt-0.5">
-                      Decisions extracted and stored in Neo4j + ChromaDB
-                    </p>
-                  </div>
-                </div>
-
-                {transcript && (
-                  <div className="glass-card rounded-xl border border-[var(--card-border)] p-4">
-                    <p className="text-xs text-gray-600 mb-2 font-medium uppercase tracking-wide">
-                      Transcript
-                    </p>
-                    <pre className="text-xs text-gray-900 whitespace-pre-wrap leading-relaxed overflow-auto max-h-48">
-                      {transcript}
-                    </pre>
-                  </div>
-                )}
-
-                {audioResult && (
-                  <div className="glass-card rounded-xl border border-[var(--card-border)] p-4">
-                    <p className="text-xs text-gray-600 mb-2 font-medium uppercase tracking-wide">
-                      Ingestion Result
-                    </p>
-                    <pre className="text-xs text-gray-900 font-mono whitespace-pre-wrap leading-relaxed overflow-auto max-h-48">
-                      {audioResult}
-                    </pre>
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setTab("query")}
-                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-colors flex items-center justify-center gap-2 shadow-lg"
-                  >
-                    <Send size={18} /> Query this now
-                  </button>
-                  <button
-                    onClick={resetAudio}
-                    className="px-4 py-2.5 rounded-xl border border-[var(--card-border)] text-gray-600 hover:text-gray-900 text-sm transition-colors"
-                  >
-                    Upload another
-                  </button>
-                </div>
-              </motion.div>
+              <IngestSuccess
+                label="Audio transcribed & ingested"
+                result={audioResult}
+                onQuery={() => switchTab("query")}
+                onReset={resetAudio}
+                resetLabel="Upload another"
+              />
             )}
           </motion.div>
         )}
@@ -1100,58 +1091,13 @@ export default function QueryPage() {
             )}
 
             {imageState === "success" && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-4"
-              >
-                <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/10 flex items-start gap-3">
-                  <CheckCircle2 size={16} className="text-green-400 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-green-400 font-medium">Image OCR & ingested</p>
-                    <p className="text-xs text-green-400/70 mt-0.5">
-                      Text extracted and decisions stored in Neo4j + ChromaDB
-                    </p>
-                  </div>
-                </div>
-
-                {extractedText && (
-                  <div className="glass-card rounded-xl border border-[var(--card-border)] p-4">
-                    <p className="text-xs text-gray-600 mb-2 font-medium uppercase tracking-wide">
-                      Extracted Text
-                    </p>
-                    <pre className="text-xs text-gray-900 whitespace-pre-wrap leading-relaxed overflow-auto max-h-48">
-                      {extractedText}
-                    </pre>
-                  </div>
-                )}
-
-                {imageResult && (
-                  <div className="glass-card rounded-xl border border-[var(--card-border)] p-4">
-                    <p className="text-xs text-gray-600 mb-2 font-medium uppercase tracking-wide">
-                      Ingestion Result
-                    </p>
-                    <pre className="text-xs text-gray-900 font-mono whitespace-pre-wrap leading-relaxed overflow-auto max-h-48">
-                      {imageResult}
-                    </pre>
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setTab("query")}
-                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-colors flex items-center justify-center gap-2 shadow-lg"
-                  >
-                    <Send size={18} /> Query this now
-                  </button>
-                  <button
-                    onClick={resetImage}
-                    className="px-4 py-2.5 rounded-xl border border-[var(--card-border)] text-gray-600 hover:text-gray-900 text-sm transition-colors"
-                  >
-                    Upload another
-                  </button>
-                </div>
-              </motion.div>
+              <IngestSuccess
+                label="Image OCR & ingested"
+                result={imageResult}
+                onQuery={() => switchTab("query")}
+                onReset={resetImage}
+                resetLabel="Upload another"
+              />
             )}
           </motion.div>
         )}
@@ -1279,7 +1225,7 @@ export default function QueryPage() {
               <IngestSuccess
                 label={`#${channelId} ingested successfully`}
                 result={slackResult}
-                onQuery={() => setTab("query")}
+                onQuery={() => switchTab("query")}
                 onReset={resetSlack}
                 resetLabel="Ingest another"
               />

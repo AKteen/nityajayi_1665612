@@ -18,6 +18,15 @@ llm = ChatGroq(
 
 SYSTEM = """You are an impact analysis agent.
 You answer "what if" and "what breaks" questions about organizational decisions.
+
+CRITICAL RULES:
+1. ONLY answer based on the data returned from the tools
+2. If source_filter is active, ONLY use information from that specific source
+3. If tools return no results, say "No information found in the selected file/source"
+4. NEVER make up or infer information not present in the tool results
+5. NEVER use general knowledge - ONLY use the retrieved data
+6. NEVER return raw transcripts - synthesize and analyze
+
 Steps:
 1. Use find_related_decisions to find all decisions connected to the topic
 2. Use search_raw_memory to find raw context and evidence
@@ -28,18 +37,24 @@ Steps:
    - Who would be affected
    - Risk level (Low / Medium / High)
 
-Be direct and concise. Focus on the specific impact being asked about."""
+Be direct and concise. Focus on the specific impact being asked about.
+Always cite sources."""
 
 
-def run_impact_agent(question: str, source_context: str = None) -> dict:
-    logger.info(f"[IMPACT AGENT] Question: {question} | Source: {source_context or 'all'}")
+def run_impact_agent(question: str, source_filter: str = None) -> dict:
+    logger.info(f"[IMPACT AGENT] Question: {question} | Filter: {source_filter}")
     
-    # Add source context to system message if provided
-    system_msg = SYSTEM
-    if source_context:
-        system_msg += f"\n\nIMPORTANT: Only search and return results from sources matching: {source_context}"
+    # Add source filter context to the question if present
+    if source_filter:
+        context_msg = f"IMPORTANT: User is querying ONLY from source '{source_filter}'. Do not use information from other sources."
+        messages = [
+            SystemMessage(content=SYSTEM),
+            SystemMessage(content=context_msg),
+            HumanMessage(content=question)
+        ]
+    else:
+        messages = [SystemMessage(content=SYSTEM), HumanMessage(content=question)]
     
-    messages = [SystemMessage(content=system_msg), HumanMessage(content=question)]
     tools_used = []
     source_trace = []
 
@@ -52,17 +67,15 @@ def run_impact_agent(question: str, source_context: str = None) -> dict:
 
         for tc in response.tool_calls:
             tools_used.append(tc["name"])
-            logger.info(f"[IMPACT AGENT] → tool: {tc['name']} args={tc['args']}")
-            
-            # Add source_filter to tool args if source_context is provided
-            if source_context and "source_filter" in tools_map[tc["name"]].args:
-                tc["args"]["source_filter"] = source_context
-            
-            result = tools_map[tc["name"]].invoke(tc["args"])
+            args = dict(tc["args"]) if tc["args"] else {}
+            if source_filter:
+                args["source_filter"] = source_filter
+            logger.info(f"[IMPACT AGENT] → tool: {tc['name']} args={args}")
+            result = tools_map[tc["name"]].invoke(args)
             source_trace.append({
                 "tool": tc["name"],
-                "args": tc["args"],
-                "result_preview": result[:300],
+                "args": args,
+                "result_preview": result[:200] if len(result) > 200 else result,
             })
             messages.append(ToolMessage(content=result, tool_call_id=tc["id"]))
 

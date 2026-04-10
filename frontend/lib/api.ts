@@ -30,9 +30,18 @@ export interface ActivityEvent {
   source?: string;
 }
 
-export async function getActivityFeed(): Promise<ActivityEvent[]> {
+export interface FileMetadata {
+  filename: string;
+  hash: string;
+  type: string;
+  source: string;
+  uploaded_at: string;
+}
+
+export async function getActivityFeed(userId?: string): Promise<ActivityEvent[]> {
   try {
-    const res = await fetch(`${BASE}/activity`);
+    const url = userId ? `${BASE}/activity?user_id=${encodeURIComponent(userId)}` : `${BASE}/activity`;
+    const res = await fetch(url, { cache: 'no-store' });
     if (!res.ok) {
       console.error('Activity API error:', res.status, res.statusText);
       return [];
@@ -45,12 +54,11 @@ export async function getActivityFeed(): Promise<ActivityEvent[]> {
   }
 }
 
-export async function queryKnowledge(question: string, sourceContext?: string): Promise<QueryResponse> {
-  // TODO: replace with real API — POST /query
+export async function queryKnowledge(question: string, sourceFilter?: string, userId?: string): Promise<QueryResponse> {
   const res = await fetch(`${BASE}/query`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ question, source_context: sourceContext }),
+    body: JSON.stringify({ question, source_filter: sourceFilter, user_id: userId }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -61,11 +69,15 @@ export async function queryKnowledge(question: string, sourceContext?: string): 
 
 export async function ingestSlack(
   channel_id: string,
-  limit = 100
+  limit = 100,
+  userId?: string
 ): Promise<IngestSlackResponse> {
+  const headers: HeadersInit = { "Content-Type": "application/json" };
+  if (userId) headers['user-id'] = userId;
+  
   const res = await fetch(`${BASE}/ingest/slack`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ channel_id, limit }),
   });
   if (!res.ok) {
@@ -75,12 +87,15 @@ export async function ingestSlack(
   return res.json();
 }
 
-export async function ingestFile(file: File): Promise<IngestSlackResponse> {
-  // TODO: replace with real API — POST /ingest/upload
+export async function ingestFile(file: File, userId?: string): Promise<IngestSlackResponse> {
   const form = new FormData();
   form.append("file", file);
+  const headers: HeadersInit = {};
+  if (userId) headers['user-id'] = userId;
+  
   const res = await fetch(`${BASE}/ingest/upload`, {
     method: "POST",
+    headers,
     body: form,
   });
   if (!res.ok) {
@@ -144,5 +159,39 @@ export async function checkHealth(): Promise<boolean> {
   } catch (error) {
     console.error("Health check failed:", error);
     return false;
+  }
+}
+
+export async function listFiles(): Promise<FileMetadata[]> {
+  try {
+    console.log('Fetching files from:', `${BASE}/files/list`);
+    const res = await fetch(`${BASE}/files/list`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    });
+    console.log('Response status:', res.status);
+    if (!res.ok) {
+      console.error('Failed to fetch files:', res.status, res.statusText);
+      return [];
+    }
+    const data = await res.json();
+    console.log('Files data received:', data);
+    return data.files || [];
+  } catch (error) {
+    console.error("Failed to list files:", error);
+    return [];
+  }
+}
+
+export async function checkFileBySource(source: string): Promise<{ exists: boolean; file?: FileMetadata }> {
+  try {
+    const res = await fetch(`${BASE}/files/check/${encodeURIComponent(source)}`);
+    if (!res.ok) return { exists: false };
+    return res.json();
+  } catch (error) {
+    console.error("Failed to check file:", error);
+    return { exists: false };
   }
 }
