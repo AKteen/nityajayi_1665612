@@ -101,7 +101,6 @@ export async function ingestSlack(
   channel_id: string,
   limit = 100
 ): Promise<IngestSlackResponse> {
-  // TODO: replace with real API — POST /ingest/slack
   const res = await fetch(`${BASE}/ingest/slack`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

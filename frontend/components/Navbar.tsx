@@ -25,7 +25,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-semibold text-sm">
           <Brain size={18} className="text-indigo-400" />
-          <span className="text-white">OrgMemory</span>
+          <span className="text-white">Recall.ai</span>
         </Link>
 
         <div className="flex items-center gap-1">
