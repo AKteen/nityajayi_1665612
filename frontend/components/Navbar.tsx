@@ -12,7 +12,14 @@ export default function Navbar() {
   const [healthy, setHealthy] = useState<boolean | null>(null);
 
   useEffect(() => {
-    checkHealth().then(setHealthy);
+    const checkApiHealth = async () => {
+      const isHealthy = await checkHealth();
+      setHealthy(isHealthy);
+    };
+    
+    checkApiHealth();
+    const interval = setInterval(checkApiHealth, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const links = [
@@ -50,7 +57,11 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-3 text-sm bg-white/80 px-4 py-2 rounded-full shadow-md border-2 border-orange-200">
+        <div className="flex items-center gap-3 text-sm bg-white/80 px-4 py-2 rounded-full shadow-md border-2 border-orange-200 cursor-pointer" onClick={async () => {
+          setHealthy(null);
+          const isHealthy = await checkHealth();
+          setHealthy(isHealthy);
+        }} title="Click to refresh API status">
           <motion.span
             animate={healthy ? { scale: [1, 1.2, 1] } : {}}
             transition={{ duration: 2, repeat: Infinity }}

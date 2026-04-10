@@ -291,7 +291,7 @@ export default function QueryPage() {
 
             {/* Search bar */}
             <motion.div 
-              className="relative rounded-2xl border-2 border-[var(--card-border)] glass-card glow-input transition-all duration-300 shadow-lg"
+              className="flex items-center gap-3 rounded-2xl border-2 border-[var(--card-border)] glass-card glow-input transition-all duration-300 shadow-lg px-4 py-3"
               whileHover={{ scale: 1.02 }}
             >
               <input
@@ -300,14 +300,14 @@ export default function QueryPage() {
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                 placeholder="Why did we choose React over Vue?"
-                className="w-full bg-transparent px-6 py-5 pr-16 text-gray-900 placeholder:text-gray-500 outline-none text-base font-medium"
+                className="flex-1 bg-transparent text-gray-900 placeholder:text-gray-500 outline-none text-base font-medium"
               />
               <motion.button
                 onClick={() => handleSubmit()}
                 disabled={loading || !question.trim()}
-                whileHover={{ scale: 1.15, rotate: 10 }}
+                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white shadow-lg"
+                className="shrink-0 p-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white shadow-lg"
               >
                 {loading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
               </motion.button>

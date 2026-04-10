@@ -18,6 +18,7 @@ export interface QueryResponse {
 export interface IngestSlackResponse {
   status: string;
   result: Record<string, unknown>;
+  suggested_questions?: string[];
 }
 
 export interface ActivityEvent {
@@ -29,58 +30,19 @@ export interface ActivityEvent {
   source?: string;
 }
 
-// TODO: replace with real API when activity/history endpoint is added
 export async function getActivityFeed(): Promise<ActivityEvent[]> {
-  return [
-    {
-      id: "1",
-      type: "query",
-      title: "Query: Why did we migrate to Postgres?",
-      description: "QUERY agent used search_decisions + search_raw_memory",
-      timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-      source: "Neo4j + ChromaDB",
-    },
-    {
-      id: "2",
-      type: "slack",
-      title: "Slack ingestion: #engineering",
-      description: "Extracted 3 decisions from 47 messages",
-      timestamp: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
-      source: "slack:C0123456",
-    },
-    {
-      id: "3",
-      type: "impact",
-      title: "Impact: What breaks if we remove Redis?",
-      description: "IMPACT agent found 5 related decisions, risk: High",
-      timestamp: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
-      source: "Neo4j",
-    },
-    {
-      id: "4",
-      type: "ingest",
-      title: "Document ingested: architecture-v2.pdf",
-      description: "Ingestion agent stored 7 decisions to Neo4j + ChromaDB",
-      timestamp: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-      source: "document:architecture-v2.pdf",
-    },
-    {
-      id: "5",
-      type: "query",
-      title: "Query: Who decided to use LangGraph?",
-      description: "QUERY agent found 2 matching decisions",
-      timestamp: new Date(Date.now() - 1000 * 60 * 130).toISOString(),
-      source: "Neo4j",
-    },
-    {
-      id: "6",
-      type: "slack",
-      title: "Slack ingestion: #product",
-      description: "Extracted 1 decision from 23 messages",
-      timestamp: new Date(Date.now() - 1000 * 60 * 200).toISOString(),
-      source: "slack:C0789012",
-    },
-  ];
+  try {
+    const res = await fetch(`${BASE}/activity`);
+    if (!res.ok) {
+      console.error('Activity API error:', res.status, res.statusText);
+      return [];
+    }
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Failed to fetch activity:', error);
+    return [];
+  }
 }
 
 export async function queryKnowledge(question: string): Promise<QueryResponse> {

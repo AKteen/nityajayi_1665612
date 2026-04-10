@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { MessageSquare, Search, Zap, FileText, Mail } from "lucide-react";
+import { MessageSquare, Search, Zap, FileText, Mail, RefreshCw } from "lucide-react";
 import { getActivityFeed, type ActivityEvent } from "@/lib/api";
 
 const eventMeta: Record<ActivityEvent["type"], { icon: React.ElementType; badgeClass: string; label: string }> = {
@@ -23,10 +23,34 @@ function timeAgo(iso: string) {
 
 export default function ActivityPage() {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+
+  const fetchEvents = useCallback(async () => {
+    try {
+      const newEvents = await getActivityFeed();
+      setEvents(newEvents);
+      setLastRefresh(new Date());
+    } catch (error) {
+      console.error('Failed to fetch events:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    getActivityFeed().then(setEvents);
-  }, []);
+    fetchEvents();
+    
+    // Auto-refresh every 10 seconds
+    const interval = setInterval(fetchEvents, 10000);
+    
+    return () => clearInterval(interval);
+  }, [fetchEvents]);
+
+  const handleRefresh = () => {
+    setLoading(true);
+    fetchEvents();
+  };
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
@@ -36,10 +60,34 @@ export default function ActivityPage() {
         transition={{ duration: 0.4 }}
         className="mb-10"
       >
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Activity Feed</h1>
-        <p className="text-sm text-gray-600">
-          Recent ingestions, queries, and AI agent activity.
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Activity Feed</h1>
+            <p className="text-sm text-gray-600">
+              Recent ingestions, queries, and AI agent activity.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-gray-500">
+              Last updated: {lastRefresh.toLocaleTimeString()}
+            </span>
+            <motion.button
+              onClick={handleRefresh}
+              disabled={loading}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-700 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <motion.div
+                animate={loading ? { rotate: 360 } : {}}
+                transition={{ duration: 1, repeat: loading ? Infinity : 0, ease: "linear" }}
+              >
+                <RefreshCw size={14} />
+              </motion.div>
+              {loading ? "Refreshing..." : "Refresh"}
+            </motion.button>
+          </div>
+        </div>
       </motion.div>
 
       <div className="relative">
@@ -86,9 +134,22 @@ export default function ActivityPage() {
         </div>
       </div>
 
-      {events.length === 0 && (
+      {events.length === 0 && !loading && (
         <div className="text-center text-gray-600 text-sm py-20">
           No activity yet. Start by querying or ingesting data.
+        </div>
+      )}
+      
+      {loading && events.length === 0 && (
+        <div className="text-center text-gray-600 text-sm py-20">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="inline-block mb-2"
+          >
+            <RefreshCw size={20} />
+          </motion.div>
+          <div>Loading activity...</div>
         </div>
       )}
     </div>

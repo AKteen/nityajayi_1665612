@@ -95,7 +95,8 @@ export default function HomePage() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1, duration: 0.5 }}
-            whileHover={{ scale: 1.08, rotate: [0, -2, 2, 0] }}
+            whileHover={{ scale: 1.08, rotate: 2 }}
+            transition={{ type: "tween" }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-orange-400 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 text-xs mb-6 cursor-default shadow-lg"
           >
             <motion.div
@@ -230,8 +231,8 @@ export default function HomePage() {
             <div className="flex items-start gap-4 relative z-10">
               <motion.div 
                 className={`p-4 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 shrink-0 group-hover:from-orange-100 group-hover:to-amber-100 transition-all border-2 border-transparent group-hover:${border} shadow-md`}
-                whileHover={{ rotate: [0, -20, 20, -20, 0], scale: 1.15 }}
-                transition={{ duration: 0.6 }}
+                whileHover={{ rotate: 20, scale: 1.15 }}
+                transition={{ type: "tween", duration: 0.6 }}
               >
                 <Icon size={28} className={`${color} group-hover:drop-shadow-[0_0_12px_currentColor]`} />
               </motion.div>
@@ -275,7 +276,8 @@ export default function HomePage() {
           <motion.div 
             key={label} 
             className="glass-card rounded-2xl p-8 border-2 border-[var(--card-border)] hover:border-orange-400 transition-all duration-300 cursor-pointer group relative overflow-hidden shadow-lg"
-            whileHover={{ scale: 1.1, y: -10, rotateZ: [0, -2, 2, 0] }}
+            whileHover={{ scale: 1.1, y: -10, rotateZ: 2 }}
+            transition={{ type: "tween" }}
             whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -296,8 +298,8 @@ export default function HomePage() {
 
             <motion.div 
               className={`text-4xl font-black bg-gradient-to-br ${color} bg-clip-text text-transparent mb-3 relative z-10`}
-              whileHover={{ scale: 1.2, rotate: [0, -8, 8, 0] }}
-              transition={{ type: "spring", stiffness: 400 }}
+              whileHover={{ scale: 1.2, rotate: 8 }}
+              transition={{ type: "tween", duration: 0.3 }}
             >
               {value}
             </motion.div>

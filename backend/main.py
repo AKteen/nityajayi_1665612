@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
+from activity_store import activity_store
 
 app = FastAPI(title="Org Memory API")
 
@@ -23,6 +24,12 @@ class SlackIngestRequest(BaseModel):
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
+@app.get("/activity")
+async def get_activity(limit: int = 50):
+    """Get recent activity events."""
+    return activity_store.get_events(limit)
+
+
 @app.get("/health")
 async def health():
     return {"status": "running"}
@@ -39,6 +46,15 @@ async def ingest_upload(file: UploadFile = File(...)):
 
         from agents.ingestion_agent import run_ingestion_agent
         result = run_ingestion_agent(content=raw_text, source=f"document:{file.filename}")
+        
+        # Log activity
+        activity_store.add_event(
+            "ingest",
+            f"Document ingested: {file.filename}",
+            f"Ingestion agent processed {len(raw_text)} characters",
+            f"document:{file.filename}"
+        )
+        
         return {"status": "success", "result": result}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -55,6 +71,15 @@ async def ingest_slack(req: SlackIngestRequest):
 
         from agents.ingestion_agent import run_ingestion_agent
         result = run_ingestion_agent(content=raw_text, source=f"slack:{req.channel_id}")
+        
+        # Log activity
+        activity_store.add_event(
+            "slack",
+            f"Slack ingestion: #{req.channel_id}",
+            f"Processed {req.limit} messages from channel",
+            f"slack:{req.channel_id}"
+        )
+        
         return {"status": "success", "result": result}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -70,6 +95,16 @@ async def query(req: QueryRequest):
     try:
         from agents.router import run
         result = run(req.question)
+        
+        # Log activity
+        agent_type = result["agent_used"].lower()
+        activity_store.add_event(
+            agent_type,
+            f"Query: {req.question[:50]}{'...' if len(req.question) > 50 else ''}",
+            f"{result['agent_used']} agent responded with {len(result['answer'])} characters",
+            "Neo4j + ChromaDB" if agent_type == "query" else "Neo4j"
+        )
+        
         return {
             "question": req.question,
             "agent_used": result["agent_used"],
