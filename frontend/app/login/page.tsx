@@ -19,13 +19,21 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      } else if (data.user) {
+        router.push("/query");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to connect to authentication service");
       setLoading(false);
-    } else {
-      router.push("/query");
     }
   };
 
