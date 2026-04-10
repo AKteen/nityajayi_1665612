@@ -89,6 +89,33 @@ async def ingest_audio(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/ingest/image")
+async def ingest_image(file: UploadFile = File(...)):
+    """Upload image — OCR to text using Groq Vision, then IngestionAgent extracts and stores decisions."""
+    try:
+        file_bytes = await file.read()
+        
+        from ingestion.image import extract_text_from_image
+        raw_text = extract_text_from_image(file_bytes, file.filename)
+        
+        from agents.ingestion_agent import run_ingestion_agent
+        result = run_ingestion_agent(content=raw_text, source=f"image:{file.filename}")
+        
+        # Log activity
+        activity_store.add_event(
+            "ingest",
+            f"Image ingested: {file.filename}",
+            f"OCR extracted and processed {len(raw_text)} characters",
+            f"image:{file.filename}"
+        )
+        
+        return {"status": "success", "result": result, "extracted_text": raw_text}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/ingest/slack")
 async def ingest_slack(req: SlackIngestRequest):
     """Fetch Slack messages — IngestionAgent extracts and stores decisions."""

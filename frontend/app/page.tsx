@@ -15,8 +15,8 @@ const features = [
   },
   {
     icon: Mail,
-    title: "Gmail Context",
-    description: "Connect email threads to decisions. Surface who said what and when across your organization.",
+    title: "Image OCR",
+    description: "Upload screenshots, whiteboards, or documents. Groq Vision extracts text and decisions automatically.",
     color: "text-blue-600",
     border: "hover:border-blue-400",
     glow: "hover:shadow-blue-400/20",
@@ -269,7 +269,7 @@ export default function HomePage() {
         className="mt-16 grid grid-cols-3 gap-4 text-center"
       >
         {[
-          { label: "Data Sources", value: "4", color: "from-green-400 to-emerald-500" },
+          { label: "Data Sources", value: "5", color: "from-green-400 to-emerald-500" },
           { label: "Agent Types", value: "2", color: "from-orange-400 to-amber-500" },
           { label: "LLM", value: "Llama 3.3", color: "from-blue-400 to-cyan-500" },
         ].map(({ label, value, color }, i) => (
