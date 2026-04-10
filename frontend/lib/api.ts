@@ -106,10 +106,15 @@ export async function ingestAudio(file: File): Promise<IngestSlackResponse & { t
 
 export async function checkHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${BASE}/health`);
+    const res = await fetch(`${BASE}/health`, {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (!res.ok) return false;
     const data = await res.json();
-    return data.status === "running";
-  } catch {
+    return data.status === "running" || data.status === "healthy";
+  } catch (error) {
+    console.error("Health check failed:", error);
     return false;
   }
 }
