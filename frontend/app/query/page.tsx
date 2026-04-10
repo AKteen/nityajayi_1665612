@@ -4,9 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Loader2, RotateCcw, ChevronDown, ChevronUp,
-  Upload, FileText, CheckCircle2, XCircle, X, MessageSquare, Hash, Mic, FileSpreadsheet,
+  Upload, FileText, CheckCircle2, XCircle, X, MessageSquare, Hash, Mic, FileSpreadsheet, Image as ImageIcon,
 } from "lucide-react";
-import { queryKnowledge, ingestFile, ingestSlack, ingestAudio, ingestExcel, type QueryResponse } from "@/lib/api";
+import { queryKnowledge, ingestFile, ingestSlack, ingestAudio, ingestExcel, ingestImage, type QueryResponse } from "@/lib/api";
 import SourceCard from "@/components/SourceCard";
 import AgentBadge from "@/components/AgentBadge";
 
@@ -17,7 +17,7 @@ const SUGGESTIONS = [
   "What alternatives were considered for the auth system?",
 ];
 
-type Tab = "query" | "upload" | "excel" | "slack" | "audio";
+type Tab = "query" | "upload" | "excel" | "audio" | "image" | "slack";
 type IngestState = "idle" | "loading" | "success" | "error";
 
 export default function QueryPage() {
@@ -67,6 +67,14 @@ export default function QueryPage() {
   const [audioError, setAudioError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<string | null>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Image state ───────────────────────────────────────────────
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageState, setImageState] = useState<IngestState>("idle");
+  const [imageResult, setImageResult] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [extractedText, setExtractedText] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Typing animation
   useEffect(() => {
@@ -255,6 +263,44 @@ export default function QueryPage() {
     if (audioInputRef.current) audioInputRef.current.value = "";
   }
 
+  // ── Image handlers ────────────────────────────────────────────
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) setImageFile(file);
+  }
+
+  async function handleImageUpload() {
+    if (!imageFile) return;
+    setImageState("loading");
+    setImageError(null);
+    setImageResult(null);
+    setExtractedText(null);
+    try {
+      const data = await ingestImage(imageFile);
+      setImageState("success");
+      setContextLabel(imageFile.name);
+      setSourceContext("image:");
+      setExtractedText(data.extracted_text || null);
+      setImageResult(
+        typeof data.result === "object"
+          ? JSON.stringify(data.result, null, 2)
+          : String(data.result)
+      );
+    } catch (e) {
+      setImageState("error");
+      setImageError(e instanceof Error ? e.message : "Image ingest failed");
+    }
+  }
+
+  function resetImage() {
+    setImageFile(null);
+    setImageState("idle");
+    setImageResult(null);
+    setImageError(null);
+    setExtractedText(null);
+    if (imageInputRef.current) imageInputRef.current.value = "";
+  }
+
   // ── Shared ingest result block ────────────────────────────────
   function IngestSuccess({
     label, result: res, onQuery, onReset, resetLabel,
@@ -315,6 +361,7 @@ export default function QueryPage() {
     { id: "upload", label: "Upload PDF", icon: Upload },
     { id: "excel", label: "Upload Excel", icon: FileSpreadsheet },
     { id: "audio", label: "Audio/Video", icon: Mic },
+    { id: "image", label: "Image OCR", icon: ImageIcon },
     { id: "slack", label: "Slack", icon: MessageSquare },
   ];
 
@@ -329,7 +376,7 @@ export default function QueryPage() {
       >
         <h1 className="text-3xl font-black text-gray-900 mb-2">Knowledge Engine</h1>
         <p className="text-base text-gray-700">
-          Ingest from Slack, PDF, or Audio/Video, then query across your entire organizational memory.
+          Ingest from Slack, PDF, Audio/Video, or Images, then query across your entire organizational memory.
         </p>
       </motion.div>
 
@@ -939,6 +986,166 @@ export default function QueryPage() {
                   </button>
                   <button
                     onClick={resetAudio}
+                    className="px-4 py-2.5 rounded-xl border border-[var(--card-border)] text-gray-600 hover:text-gray-900 text-sm transition-colors"
+                  >
+                    Upload another
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ── IMAGE TAB ──────────────────────────────────────────── */}
+        {tab === "image" && (
+          <motion.div
+            key="image"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-5"
+          >
+            <p className="text-sm text-gray-600">
+              Upload an image — we'll extract text using Groq Vision OCR, then extract decisions
+              and store them in Neo4j + ChromaDB.
+            </p>
+
+            <div
+              onClick={() => imageState !== "success" && imageInputRef.current?.click()}
+              className={`rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer p-10 text-center ${
+                imageFile
+                  ? "border-green-500/50 bg-green-50"
+                  : "border-[var(--card-border)] hover:border-orange-400 hover:bg-orange-50/30"
+              }`}
+            >
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*,.png,.jpg,.jpeg,.gif,.webp"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              {imageFile ? (
+                <div className="flex flex-col items-center gap-3">
+                  <ImageIcon size={36} className="text-green-400" />
+                  <div>
+                    <p className="text-gray-900 font-medium text-sm">{imageFile.name}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      {(imageFile.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                  {imageState !== "success" && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); resetImage(); }}
+                      className="text-xs text-gray-600 hover:text-red-500 transition-colors flex items-center gap-1"
+                    >
+                      <X size={12} /> Remove
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <ImageIcon size={36} className="text-gray-500" />
+                  <div>
+                    <p className="text-gray-900 text-sm font-medium">Drop image here</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      or click to browse · PNG, JPG, JPEG, GIF, WebP
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {imageFile && imageState === "idle" && (
+              <button
+                onClick={handleImageUpload}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-all flex items-center justify-center gap-3 sunrise-glow shadow-xl"
+              >
+                <ImageIcon size={20} /> Extract Text & Ingest
+              </button>
+            )}
+
+            {imageState === "loading" && (
+              <div className="space-y-3">
+                <div className="w-full py-3 rounded-xl bg-orange-500/50 text-white text-sm font-medium flex items-center justify-center gap-2">
+                  <Loader2 size={16} className="animate-spin" /> Extracting text from image…
+                </div>
+                <div className="w-full h-1 rounded-full bg-orange-100 overflow-hidden">
+                  <motion.div
+                    className="h-full bg-orange-500 rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: "90%" }}
+                    transition={{ duration: 10, ease: "easeOut" }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {imageState === "error" && imageError && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 flex items-start gap-3"
+              >
+                <XCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-red-400 font-medium">OCR extraction failed</p>
+                  <p className="text-xs text-red-400/70 mt-1">{imageError}</p>
+                </div>
+                <button onClick={resetImage} className="text-red-400/60 hover:text-red-400">
+                  <RotateCcw size={14} />
+                </button>
+              </motion.div>
+            )}
+
+            {imageState === "success" && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-4"
+              >
+                <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/10 flex items-start gap-3">
+                  <CheckCircle2 size={16} className="text-green-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-green-400 font-medium">Image OCR & ingested</p>
+                    <p className="text-xs text-green-400/70 mt-0.5">
+                      Text extracted and decisions stored in Neo4j + ChromaDB
+                    </p>
+                  </div>
+                </div>
+
+                {extractedText && (
+                  <div className="glass-card rounded-xl border border-[var(--card-border)] p-4">
+                    <p className="text-xs text-gray-600 mb-2 font-medium uppercase tracking-wide">
+                      Extracted Text
+                    </p>
+                    <pre className="text-xs text-gray-900 whitespace-pre-wrap leading-relaxed overflow-auto max-h-48">
+                      {extractedText}
+                    </pre>
+                  </div>
+                )}
+
+                {imageResult && (
+                  <div className="glass-card rounded-xl border border-[var(--card-border)] p-4">
+                    <p className="text-xs text-gray-600 mb-2 font-medium uppercase tracking-wide">
+                      Ingestion Result
+                    </p>
+                    <pre className="text-xs text-gray-900 font-mono whitespace-pre-wrap leading-relaxed overflow-auto max-h-48">
+                      {imageResult}
+                    </pre>
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setTab("query")}
+                    className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-colors flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    <Send size={18} /> Query this now
+                  </button>
+                  <button
+                    onClick={resetImage}
                     className="px-4 py-2.5 rounded-xl border border-[var(--card-border)] text-gray-600 hover:text-gray-900 text-sm transition-colors"
                   >
                     Upload another

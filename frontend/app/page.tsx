@@ -19,6 +19,7 @@ const features = [
     delay: 0.1,
   },
   {
+  {
     icon: FileText,
     title: "PDF Documents",
     description: "Upload PDF files to extract decisions and organizational knowledge using AI agents.",

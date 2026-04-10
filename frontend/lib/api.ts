@@ -118,6 +118,20 @@ export async function ingestAudio(file: File): Promise<IngestSlackResponse & { t
   return res.json();
 }
 
+export async function ingestImage(file: File): Promise<IngestSlackResponse & { extracted_text?: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BASE}/ingest/image`, {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? "Image ingest failed");
+  }
+  return res.json();
+}
+
 export async function checkHealth(): Promise<boolean> {
   try {
     const res = await fetch(`${BASE}/health`, {

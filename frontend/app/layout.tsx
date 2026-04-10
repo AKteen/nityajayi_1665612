@@ -14,8 +14,11 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Organizational Memory & Reasoning Engine",
+  title: "Recall.AI",
   description: "Query company knowledge from Slack, Gmail, Neo4j, and ChromaDB via LangChain",
+  icons: {
+    icon: '/brain-icon.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
