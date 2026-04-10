@@ -15,7 +15,7 @@ llm = ChatGroq(
 
 PROMPT = ChatPromptTemplate.from_messages([
     ("system", """You are an organizational memory extractor.
-Extract ALL decisions, reasoning, and key information from the document.
+Extract ALL decisions, reasoning, and key information from the content.
 Return a JSON array. Each item must have exactly these fields:
 - decision: what was decided
 - reason: why it was decided
@@ -26,19 +26,13 @@ Return a JSON array. Each item must have exactly these fields:
 - topic: high-level domain (e.g. hiring, product, budget, tech)
 
 Return ONLY a valid JSON array. No markdown, no explanation."""),
-    ("human", "Document:\n{content}"),
+    ("human", "Content:\n{content}"),
 ])
 
 chain = PROMPT | llm
 
 
-def run_ingestion(file_bytes: bytes, filename: str, source: str = "document") -> dict:
-    # 1. Extract text via pymupdf
-    doc = fitz.open(stream=file_bytes, filetype="pdf")
-    raw_text = "\n".join(page.get_text() for page in doc)
-    logger.info(f"[EXTRACT] '{filename}' → {len(raw_text)} chars extracted")
-
-    # 2. Groq → structured JSON
+def _structure_and_store(raw_text: str, source: str) -> dict:
     response = chain.invoke({"content": raw_text})
     raw = response.content.strip()
     if raw.startswith("```"):
@@ -49,9 +43,8 @@ def run_ingestion(file_bytes: bytes, filename: str, source: str = "document") ->
     items = json.loads(raw)
     if not isinstance(items, list):
         items = [items]
-    logger.info(f"[GROQ] Extracted {len(items)} structured items from '{filename}'")
+    logger.info(f"[GROQ] Extracted {len(items)} items from '{source}'")
 
-    # 3. Store each item into Neo4j
     from db.neo import neo_store
     for i, item in enumerate(items):
         decision_id = neo_store(
@@ -67,5 +60,16 @@ def run_ingestion(file_bytes: bytes, filename: str, source: str = "document") ->
         item["decision_id"] = decision_id
         logger.info(f"[NEO4J] ✓ {i+1}/{len(items)}: '{item.get('decision', '')[:60]}'")
 
-    logger.info(f"[DONE] '{filename}' → {len(items)} items stored in Neo4j")
     return {"ingested": len(items), "items": items}
+
+
+def run_ingestion(file_bytes: bytes, filename: str, source: str = "document") -> dict:
+    doc = fitz.open(stream=file_bytes, filetype="pdf")
+    raw_text = "\n".join(page.get_text() for page in doc)
+    logger.info(f"[EXTRACT] '{filename}' → {len(raw_text)} chars")
+    return _structure_and_store(raw_text, source)
+
+
+def run_ingestion_from_text(raw_text: str, source: str) -> dict:
+    logger.info(f"[EXTRACT] source='{source}' → {len(raw_text)} chars")
+    return _structure_and_store(raw_text, source)

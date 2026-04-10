@@ -17,6 +17,10 @@ app.add_middleware(
 class QueryRequest(BaseModel):
     question: str
 
+class SlackIngestRequest(BaseModel):
+    channel_id: str
+    limit: int = 100
+
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
 @app.get("/health")
@@ -26,15 +30,15 @@ async def health():
 
 @app.post("/ingest/upload")
 async def ingest_upload(file: UploadFile = File(...)):
-    """Upload a document (PDF, DOCX, TXT) to ingest into org memory."""
+    """Upload a PDF — IngestionAgent extracts and stores decisions."""
     try:
+        import fitz
         file_bytes = await file.read()
-        from ingestion.pipeline import run_ingestion
-        result = run_ingestion(
-            file_bytes=file_bytes,
-            filename=file.filename,
-            source="document",
-        )
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        raw_text = "\n".join(page.get_text() for page in doc)
+
+        from agents.ingestion_agent import run_ingestion_agent
+        result = run_ingestion_agent(content=raw_text, source=f"document:{file.filename}")
         return {"status": "success", "result": result}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -42,17 +46,37 @@ async def ingest_upload(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/ingest/slack")
+async def ingest_slack(req: SlackIngestRequest):
+    """Fetch Slack messages — IngestionAgent extracts and stores decisions."""
+    try:
+        from ingestion.slack import fetch_slack_text
+        raw_text = fetch_slack_text(req.channel_id, req.limit)
+
+        from agents.ingestion_agent import run_ingestion_agent
+        result = run_ingestion_agent(content=raw_text, source=f"slack:{req.channel_id}")
+        return {"status": "success", "result": result}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+from datetime import datetime, timezone
+
 @app.post("/query")
 async def query(req: QueryRequest):
-    """Ask a question about past decisions and reasoning."""
+    """Ask anything — router decides which agent handles it."""
     try:
-        from agent import run_agent
-        result = run_agent(req.question)
+        from agents.router import run
+        result = run(req.question)
         return {
             "question": req.question,
+            "agent_used": result["agent_used"],
             "answer": result["answer"],
             "reasoning": result["reasoning"],
             "source_trace": result["source_trace"],
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

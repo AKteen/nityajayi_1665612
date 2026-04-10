@@ -16,3 +16,6 @@ neo4j
 
 # Document parsing
 pymupdf
+
+# Slack
+slack-sdk

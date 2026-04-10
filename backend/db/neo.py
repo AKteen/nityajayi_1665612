@@ -54,6 +54,34 @@ def neo_store(
     return decision_id
 
 
+def neo_impact_search(topic: str, limit: int = 10) -> list:
+    """Find all decisions related to a topic and their downstream impacts."""
+    with _driver.session() as session:
+        result = session.run(
+            """
+            MATCH (d:Decision)
+            OPTIONAL MATCH (d)-[:BASED_ON]->(r:Reason)
+            OPTIONAL MATCH (d)-[:MADE_BY]->(p:Person)
+            OPTIONAL MATCH (d)-[:ALTERNATIVE]->(a:Alternative)
+            WITH d,
+                 collect(DISTINCT r.text) as reasons,
+                 collect(DISTINCT p.name) as people,
+                 collect(DISTINCT a.text) as alternatives
+            WHERE any(word IN split(toLower($topic), ' ')
+                WHERE toLower(d.action)  CONTAINS word
+                   OR toLower(d.subject) CONTAINS word
+                   OR any(rr IN reasons WHERE toLower(rr) CONTAINS word)
+            )
+            RETURN d.id as id, d.action as decision, d.subject as topic,
+                   d.impact as impact, d.source as source,
+                   reasons, people, alternatives
+            LIMIT $limit
+            """,
+            topic=topic, limit=limit,
+        )
+        return result.data()
+
+
 def neo_search(query: str, limit: int = 5) -> list:
     with _driver.session() as session:
         result = session.run(
