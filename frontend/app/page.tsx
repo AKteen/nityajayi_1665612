@@ -15,6 +15,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Aurora from "@/components/Aurora";
 import FileSelector from "@/components/FileSelector";
+import { MagicBentoCard, MagicBentoGrid } from "@/components/MagicBento";
+import TextType from "@/components/TextType";
+import BorderGlow from "@/components/BorderGlow";
 
 const features = [
   {
@@ -125,14 +128,23 @@ export default function HomePage() {
               className="flex justify-center mb-8"
             >
               <img 
-                src="/logo1.png" 
+                src="/logo3.png" 
                 alt="Recall.AI Logo" 
                 className="h-32 md:h-40 lg:h-48 w-auto object-contain"
               />
             </motion.div>
-            <p className="text-2xl md:text-3xl font-bold text-white">
-              Remember The "Why"
-            </p>
+            <TextType
+              text={['Remember The "Why"', 'Remember The "Why"']}
+              as="p"
+              typingSpeed={100}
+              pauseDuration={2000}
+              deletingSpeed={50}
+              loop={true}
+              showCursor={true}
+              cursorCharacter="|"
+              cursorBlinkDuration={0.7}
+              className="text-2xl md:text-3xl font-bold text-white"
+            />
           </motion.div>
 
           {/* CTA Buttons */}
@@ -144,7 +156,7 @@ export default function HomePage() {
           >
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 shadow-lg">
+                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/20">
                   <FolderOpen size={20} />
                   Select Existing File
                 </Button>
@@ -212,10 +224,24 @@ export default function HomePage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.6 + i * 0.1 }}
                 whileHover={{ scale: 1.05, y: -5 }}
-                className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/40 hover:border-white/60 transition-all shadow-xl hover:bg-white/30"
               >
-                <div className="text-3xl font-black text-white">{stat.value}</div>
-                <div className="text-xs text-white/80 uppercase tracking-wider mt-1">{stat.label}</div>
+                <BorderGlow
+                  edgeSensitivity={40}
+                  glowColor="200 80 80"
+                  backgroundColor="rgba(255, 255, 255, 0.2)"
+                  borderRadius={16}
+                  glowRadius={30}
+                  glowIntensity={1.2}
+                  coneSpread={30}
+                  colors={['#3b82f6', '#06b6d4', '#8b5cf6']}
+                  fillOpacity={0.3}
+                  className="h-full"
+                >
+                  <div className="backdrop-blur-md p-6 h-full flex flex-col items-center justify-center">
+                    <div className="text-3xl font-bold text-white">{stat.value}</div>
+                    <div className="text-xs text-white/80 uppercase tracking-wider mt-1">{stat.label}</div>
+                  </div>
+                </BorderGlow>
               </motion.div>
             ))}
           </motion.div>
@@ -244,40 +270,57 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {features.map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: feature.delay, type: "spring" }}
-                whileHover={{ scale: 1.02, y: -5 }}
-              >
-                <Card className="h-full border-2 border-blue-200 hover:border-blue-400 hover:shadow-xl transition-all group cursor-pointer bg-white/80 backdrop-blur-sm">
-                  <CardHeader>
-                    <div className="flex items-start gap-4">
-                      <motion.div
-                        whileHover={{ rotate: 360, scale: 1.1 }}
-                        transition={{ duration: 0.6 }}
-                        className="p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg"
-                      >
-                        <feature.icon className="w-6 h-6 text-white" />
-                      </motion.div>
-                      <div className="flex-1">
-                        <CardTitle className="group-hover:text-blue-600 transition-colors">
-                          {feature.title}
-                        </CardTitle>
-                        <CardDescription className="mt-2">
-                          {feature.description}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          <MagicBentoGrid
+            enableSpotlight={true}
+            spotlightRadius={400}
+            glowColor="59, 130, 246"
+          >
+            <div className="grid md:grid-cols-2 gap-6">
+              {features.map((feature, i) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: feature.delay, type: "spring" }}
+                  whileHover={{ scale: 1.02, y: -5 }}
+                >
+                  <MagicBentoCard
+                    enableStars={true}
+                    enableBorderGlow={true}
+                    enableTilt={true}
+                    enableMagnetism={false}
+                    clickEffect={true}
+                    particleCount={12}
+                    glowColor="59, 130, 246"
+                    className="h-full"
+                  >
+                    <Card className="h-full border-2 border-blue-200 hover:border-blue-400 hover:shadow-xl transition-all group cursor-pointer bg-white/80 backdrop-blur-sm">
+                      <CardHeader>
+                        <div className="flex items-start gap-4">
+                          <motion.div
+                            whileHover={{ rotate: 360, scale: 1.1 }}
+                            transition={{ duration: 0.6 }}
+                            className="p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg"
+                          >
+                            <feature.icon className="w-6 h-6 text-white" />
+                          </motion.div>
+                          <div className="flex-1">
+                            <CardTitle className="group-hover:text-blue-600 transition-colors">
+                              {feature.title}
+                            </CardTitle>
+                            <CardDescription className="mt-2">
+                              {feature.description}
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  </MagicBentoCard>
+                </motion.div>
+              ))}
+            </div>
+          </MagicBentoGrid>
         </div>
       </section>
 
@@ -303,41 +346,58 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {agents.map((agent, i) => (
-              <motion.div
-                key={agent.title}
-                initial={{ opacity: 0, y: 50, rotateX: -15 }}
-                whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: i * 0.15, type: "spring", stiffness: 100 }}
-                whileHover={{ scale: 1.05, y: -8, rotateY: 5 }}
-                style={{ transformStyle: "preserve-3d" }}
-              >
-                <Card className="h-full border-2 border-blue-200 hover:border-blue-400 hover:shadow-2xl transition-all group cursor-pointer bg-white/80 backdrop-blur-sm">
-                  <CardHeader>
-                    <div className="flex items-start gap-4">
-                      <motion.div
-                        whileHover={{ rotate: 360, scale: 1.1 }}
-                        transition={{ duration: 0.6 }}
-                        className="p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg"
-                      >
-                        <agent.icon className="w-6 h-6 text-white" />
-                      </motion.div>
-                      <div className="flex-1">
-                        <CardTitle className="text-lg group-hover:text-blue-600 transition-colors mb-2">
-                          {agent.title}
-                        </CardTitle>
-                        <CardDescription className="text-sm">
-                          {agent.description}
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          <MagicBentoGrid
+            enableSpotlight={true}
+            spotlightRadius={400}
+            glowColor="59, 130, 246"
+          >
+            <div className="grid md:grid-cols-2 gap-6">
+              {agents.map((agent, i) => (
+                <motion.div
+                  key={agent.title}
+                  initial={{ opacity: 0, y: 50, rotateX: -15 }}
+                  whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: i * 0.15, type: "spring", stiffness: 100 }}
+                  whileHover={{ scale: 1.05, y: -8, rotateY: 5 }}
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  <MagicBentoCard
+                    enableStars={true}
+                    enableBorderGlow={true}
+                    enableTilt={true}
+                    enableMagnetism={false}
+                    clickEffect={true}
+                    particleCount={12}
+                    glowColor="59, 130, 246"
+                    className="h-full"
+                  >
+                    <Card className="h-full border-2 border-blue-200 hover:border-blue-400 hover:shadow-2xl transition-all group cursor-pointer bg-white/80 backdrop-blur-sm">
+                      <CardHeader>
+                        <div className="flex items-start gap-4">
+                          <motion.div
+                            whileHover={{ rotate: 360, scale: 1.1 }}
+                            transition={{ duration: 0.6 }}
+                            className="p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg"
+                          >
+                            <agent.icon className="w-6 h-6 text-white" />
+                          </motion.div>
+                          <div className="flex-1">
+                            <CardTitle className="text-lg group-hover:text-blue-600 transition-colors mb-2">
+                              {agent.title}
+                            </CardTitle>
+                            <CardDescription className="text-sm">
+                              {agent.description}
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  </MagicBentoCard>
+                </motion.div>
+              ))}
+            </div>
+          </MagicBentoGrid>
         </div>
       </section>
 
@@ -413,7 +473,7 @@ export default function HomePage() {
               <Button 
                 asChild 
                 size="lg" 
-                className="bg-white hover:bg-gray-100 shadow-2xl"
+                className="bg-white hover:bg-gray-100 shadow-2xl border-2 border-white"
               >
                 <Link href="/query" className="text-white">
                   Start Querying

@@ -368,7 +368,7 @@ export default function QueryPage() {
         <div className="flex gap-3">
           <button
             onClick={onQuery}
-            className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-colors flex items-center justify-center gap-2 shadow-lg"
+            className="flex-1 py-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white text-base font-bold transition-colors flex items-center justify-center gap-2 shadow-lg border border-blue-500"
           >
             <Send size={18} /> Query this now
           </button>
@@ -412,7 +412,7 @@ export default function QueryPage() {
       >
         <h1 className="text-3xl font-black text-gray-900 mb-2">Knowledge Engine</h1>
         <p className="text-base text-gray-700">
-          Ingest from Slack, PDF, Audio/Video, or Images, then query across your entire organizational memory.
+          Ingest from Slack, PDF, Excel, Audio/Video, or Images, then query across your entire organizational memory.
         </p>
       </motion.div>
 
@@ -429,10 +429,10 @@ export default function QueryPage() {
             onClick={() => switchTab(id)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+            className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all duration-200 border ${
               tab === id
-                ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-xl"
-                : "text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50"
+                ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-xl border-blue-500"
+                : "text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 border-gray-200"
             }`}
           >
             <motion.div
@@ -492,7 +492,7 @@ export default function QueryPage() {
                 disabled={loading || !question.trim()}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="shrink-0 p-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white shadow-lg"
+                className="shrink-0 p-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white shadow-lg border border-blue-500"
               >
                 {loading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
               </motion.button>
@@ -515,7 +515,7 @@ export default function QueryPage() {
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleSubmit(s)}
-                    className="text-sm px-4 py-2 rounded-full border-2 border-[var(--card-border)] text-gray-700 hover:text-orange-600 hover:border-orange-400 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 transition-all font-medium shadow-sm"
+                    className="text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:text-blue-600 hover:border-blue-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-all font-medium shadow-sm"
                   >
                     {s}
                   </motion.button>
@@ -616,7 +616,7 @@ export default function QueryPage() {
 
                   <button
                     onClick={() => { setResult(null); setQuestion(""); inputRef.current?.focus(); }}
-                    className="text-xs text-orange-600 hover:text-orange-500 transition-colors flex items-center gap-1"
+                    className="text-xs text-blue-600 hover:text-blue-500 transition-colors flex items-center gap-1"
                   >
                     <RotateCcw size={12} /> Ask another question
                   </button>
@@ -649,10 +649,10 @@ export default function QueryPage() {
               onClick={() => uploadState !== "success" && fileInputRef.current?.click()}
               className={`rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer p-10 text-center ${
                 dragOver
-                  ? "border-orange-500 bg-orange-50"
+                  ? "border-blue-500 bg-blue-50"
                   : selectedFile
                   ? "border-green-500/50 bg-green-50"
-                  : "border-[var(--card-border)] hover:border-orange-400 hover:bg-orange-50/30"
+                  : "border-gray-200 hover:border-blue-400 hover:bg-blue-50/30"
               }`}
             >
               <input
@@ -695,7 +695,7 @@ export default function QueryPage() {
             {selectedFile && uploadState === "idle" && (
               <button
                 onClick={handleUpload}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-all flex items-center justify-center gap-3 sunrise-glow shadow-xl"
+                className="w-full py-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white text-base font-bold transition-all flex items-center justify-center gap-3 shadow-xl border border-blue-500"
               >
                 <Upload size={20} /> Ingest PDF
               </button>
@@ -704,12 +704,12 @@ export default function QueryPage() {
             {/* Progress */}
             {uploadState === "loading" && (
               <div className="space-y-3">
-                <div className="w-full py-3 rounded-xl bg-orange-500/50 text-white text-sm font-medium flex items-center justify-center gap-2">
+                <div className="w-full py-3 rounded-xl bg-blue-500/50 text-white text-sm font-medium flex items-center justify-center gap-2">
                   <Loader2 size={16} className="animate-spin" /> Ingesting document…
                 </div>
-                <div className="w-full h-1 rounded-full bg-orange-100 overflow-hidden">
+                <div className="w-full h-1 rounded-full bg-blue-100 overflow-hidden">
                   <motion.div
-                    className="h-full bg-orange-500 rounded-full"
+                    className="h-full bg-blue-500 rounded-full"
                     initial={{ width: "0%" }}
                     animate={{ width: "90%" }}
                     transition={{ duration: 8, ease: "easeOut" }}
@@ -772,10 +772,10 @@ export default function QueryPage() {
               onClick={() => excelState !== "success" && excelInputRef.current?.click()}
               className={`rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer p-10 text-center ${
                 excelDragOver
-                  ? "border-orange-500 bg-orange-50"
+                  ? "border-blue-500 bg-blue-50"
                   : selectedExcel
                   ? "border-green-500/50 bg-green-50"
-                  : "border-[var(--card-border)] hover:border-orange-400 hover:bg-orange-50/30"
+                  : "border-gray-200 hover:border-blue-400 hover:bg-blue-50/30"
               }`}
             >
               <input
@@ -818,7 +818,7 @@ export default function QueryPage() {
             {selectedExcel && excelState === "idle" && (
               <button
                 onClick={handleExcelUpload}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-all flex items-center justify-center gap-3 sunrise-glow shadow-xl"
+                className="w-full py-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white text-base font-bold transition-all flex items-center justify-center gap-3 shadow-xl border border-blue-500"
               >
                 <FileSpreadsheet size={20} /> Ingest Excel
               </button>
@@ -827,12 +827,12 @@ export default function QueryPage() {
             {/* Progress */}
             {excelState === "loading" && (
               <div className="space-y-3">
-                <div className="w-full py-3 rounded-xl bg-orange-500/50 text-white text-sm font-medium flex items-center justify-center gap-2">
+                <div className="w-full py-3 rounded-xl bg-blue-500/50 text-white text-sm font-medium flex items-center justify-center gap-2">
                   <Loader2 size={16} className="animate-spin" /> Ingesting Excel…
                 </div>
-                <div className="w-full h-1 rounded-full bg-orange-100 overflow-hidden">
+                <div className="w-full h-1 rounded-full bg-blue-100 overflow-hidden">
                   <motion.div
-                    className="h-full bg-orange-500 rounded-full"
+                    className="h-full bg-blue-500 rounded-full"
                     initial={{ width: "0%" }}
                     animate={{ width: "90%" }}
                     transition={{ duration: 8, ease: "easeOut" }}
@@ -892,7 +892,7 @@ export default function QueryPage() {
               className={`rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer p-10 text-center ${
                 audioFile
                   ? "border-green-500/50 bg-green-50"
-                  : "border-[var(--card-border)] hover:border-orange-400 hover:bg-orange-50/30"
+                  : "border-gray-200 hover:border-blue-400 hover:bg-blue-50/30"
               }`}
             >
               <input
@@ -936,7 +936,7 @@ export default function QueryPage() {
             {audioFile && audioState === "idle" && (
               <button
                 onClick={handleAudioUpload}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-all flex items-center justify-center gap-3 sunrise-glow shadow-xl"
+                className="w-full py-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white text-base font-bold transition-all flex items-center justify-center gap-3 shadow-xl border border-blue-500"
               >
                 <Mic size={20} /> Transcribe & Ingest
               </button>
@@ -944,12 +944,12 @@ export default function QueryPage() {
 
             {audioState === "loading" && (
               <div className="space-y-3">
-                <div className="w-full py-3 rounded-xl bg-orange-500/50 text-white text-sm font-medium flex items-center justify-center gap-2">
+                <div className="w-full py-3 rounded-xl bg-blue-500/50 text-white text-sm font-medium flex items-center justify-center gap-2">
                   <Loader2 size={16} className="animate-spin" /> Transcribing audio…
                 </div>
-                <div className="w-full h-1 rounded-full bg-orange-100 overflow-hidden">
+                <div className="w-full h-1 rounded-full bg-blue-100 overflow-hidden">
                   <motion.div
-                    className="h-full bg-orange-500 rounded-full"
+                    className="h-full bg-blue-500 rounded-full"
                     initial={{ width: "0%" }}
                     animate={{ width: "90%" }}
                     transition={{ duration: 15, ease: "easeOut" }}
@@ -1136,7 +1136,7 @@ export default function QueryPage() {
                     onKeyDown={(e) => e.key === "Enter" && handleSlackIngest()}
                     placeholder="C0123456789"
                     disabled={slackState === "loading" || slackState === "success"}
-                    className="w-full bg-transparent border border-[var(--card-border)] rounded-lg pl-8 pr-4 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none text-sm focus:border-orange-500 transition-colors disabled:opacity-50"
+                    className="w-full bg-transparent border border-gray-200 rounded-lg pl-8 pr-4 py-2.5 text-gray-900 placeholder:text-gray-500 outline-none text-sm focus:border-blue-500 transition-colors disabled:opacity-50"
                   />
                 </div>
                 <p className="text-xs text-gray-600">
@@ -1150,7 +1150,7 @@ export default function QueryPage() {
                   <label className="text-xs font-medium text-gray-600 uppercase tracking-wide">
                     Message Limit
                   </label>
-                  <span className="text-xs font-mono text-orange-600">{msgLimit}</span>
+                  <span className="text-xs font-mono text-blue-600">{msgLimit}</span>
                 </div>
                 <input
                   type="range"
@@ -1160,7 +1160,7 @@ export default function QueryPage() {
                   value={msgLimit}
                   onChange={(e) => setMsgLimit(Number(e.target.value))}
                   disabled={slackState === "loading" || slackState === "success"}
-                  className="w-full accent-orange-500 disabled:opacity-50"
+                  className="w-full accent-blue-500 disabled:opacity-50"
                 />
                 <div className="flex justify-between text-xs text-gray-600">
                   <span>10</span>
@@ -1173,7 +1173,7 @@ export default function QueryPage() {
                 <button
                   onClick={handleSlackIngest}
                   disabled={!channelId.trim() || slackState === "loading"}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-white text-base font-bold transition-colors flex items-center justify-center gap-3 sunrise-glow shadow-xl"
+                  className="w-full py-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed text-white text-base font-bold transition-colors flex items-center justify-center gap-3 shadow-xl border border-blue-500"
                 >
                   {slackState === "loading" ? (
                     <>
@@ -1191,9 +1191,9 @@ export default function QueryPage() {
 
               {/* Progress bar */}
               {slackState === "loading" && (
-                <div className="w-full h-1 rounded-full bg-orange-100 overflow-hidden">
+                <div className="w-full h-1 rounded-full bg-blue-100 overflow-hidden">
                   <motion.div
-                    className="h-full bg-orange-500 rounded-full"
+                    className="h-full bg-blue-500 rounded-full"
                     initial={{ width: "0%" }}
                     animate={{ width: "85%" }}
                     transition={{ duration: 10, ease: "easeOut" }}

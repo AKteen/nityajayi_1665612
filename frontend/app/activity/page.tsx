@@ -78,7 +78,7 @@ export default function ActivityPage() {
               disabled={loading}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-700 text-sm font-medium transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm font-medium transition-colors disabled:opacity-50 border border-blue-200"
             >
               <motion.div
                 animate={loading ? { rotate: 360 } : {}}
@@ -110,12 +110,12 @@ export default function ActivityPage() {
                 className="relative flex gap-5 pb-8"
               >
                 {/* Icon dot */}
-                <div className="relative z-10 shrink-0 w-10 h-10 rounded-full glass-card border border-[var(--card-border)] flex items-center justify-center">
+                <div className="relative z-10 shrink-0 w-10 h-10 rounded-full glass-card border border-gray-200 flex items-center justify-center">
                   <Icon size={15} className="text-gray-600" />
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 glass-card rounded-xl p-4 border border-[var(--card-border)] hover:border-orange-400 transition-colors">
+                <div className="flex-1 glass-card rounded-xl p-4 border border-gray-200 hover:border-blue-400 transition-colors">
                   <div className="flex items-start justify-between gap-3 mb-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`text-xs px-2 py-0.5 rounded-full border ${meta.badgeClass}`}>
@@ -127,7 +127,7 @@ export default function ActivityPage() {
                   </div>
                   <p className="text-xs text-gray-600">{event.description}</p>
                   {event.source && (
-                    <p className="text-xs text-orange-600/70 mt-1 font-mono">{event.source}</p>
+                    <p className="text-xs text-blue-600/70 mt-1 font-mono">{event.source}</p>
                   )}
                 </div>
               </motion.div>
