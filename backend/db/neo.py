@@ -1,10 +1,17 @@
 import uuid
+import time
+import logging
 from neo4j import GraphDatabase
 from core.config import settings
+
+logger = logging.getLogger(__name__)
 
 _driver = GraphDatabase.driver(
     settings.neo4j_uri,
     auth=(settings.neo4j_username, settings.neo4j_password),
+    max_connection_lifetime=3600,
+    max_connection_pool_size=50,
+    connection_acquisition_timeout=120,
 )
 
 
@@ -19,39 +26,53 @@ def neo_store(
     timestamp: str = "",
 ) -> str:
     decision_id = str(uuid.uuid4())
-    with _driver.session() as session:
-        session.run(
-            """
-            MERGE (d:Decision {action: $action})
-            SET d.id        = $decision_id,
-                d.subject   = $subject,
-                d.impact    = $impact,
-                d.source    = $source,
-                d.timestamp = $timestamp
-            WITH d
-            FOREACH (person IN $people |
-                MERGE (p:Person {name: person})
-                MERGE (d)-[:MADE_BY]->(p)
-            )
-            WITH d
-            FOREACH (alt IN $alternatives |
-                MERGE (a:Alternative {text: alt})
-                MERGE (d)-[:ALTERNATIVE]->(a)
-            )
-            WITH d
-            FOREACH (r IN CASE WHEN $reason <> '' THEN [$reason] ELSE [] END |
-                MERGE (rn:Reason {text: r})
-                MERGE (d)-[:BASED_ON]->(rn)
-            )
-            """,
-            action=action, decision_id=decision_id,
-            subject=subject, impact=impact,
-            source=source, timestamp=timestamp,
-            people=people or [],
-            alternatives=alternatives or [],
-            reason=reason or "",
-        )
-    return decision_id
+    max_retries = 3
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            with _driver.session() as session:
+                session.run(
+                    """
+                    MERGE (d:Decision {action: $action})
+                    SET d.id        = $decision_id,
+                        d.subject   = $subject,
+                        d.impact    = $impact,
+                        d.source    = $source,
+                        d.timestamp = $timestamp
+                    WITH d
+                    FOREACH (person IN $people |
+                        MERGE (p:Person {name: person})
+                        MERGE (d)-[:MADE_BY]->(p)
+                    )
+                    WITH d
+                    FOREACH (alt IN $alternatives |
+                        MERGE (a:Alternative {text: alt})
+                        MERGE (d)-[:ALTERNATIVE]->(a)
+                    )
+                    WITH d
+                    FOREACH (r IN CASE WHEN $reason <> '' THEN [$reason] ELSE [] END |
+                        MERGE (rn:Reason {text: r})
+                        MERGE (d)-[:BASED_ON]->(rn)
+                    )
+                    """,
+                    action=action, decision_id=decision_id,
+                    subject=subject, impact=impact,
+                    source=source, timestamp=timestamp,
+                    people=people or [],
+                    alternatives=alternatives or [],
+                    reason=reason or "",
+                )
+            logger.info(f"[NEO4J] Stored decision: {decision_id}")
+            return decision_id
+        except Exception as e:
+            logger.warning(f"[NEO4J] Attempt {attempt + 1}/{max_retries} failed: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                retry_delay *= 2
+            else:
+                logger.error(f"[NEO4J] Failed to store after {max_retries} attempts")
+                raise
 
 
 def neo_impact_search(topic: str, limit: int = 10) -> list:

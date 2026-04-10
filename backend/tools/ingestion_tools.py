@@ -24,39 +24,62 @@ _chain = _PROMPT | _llm
 @tool
 def extract_and_store(content: str, source: str) -> str:
     """Extract decisions from raw text using LLM and store them into Neo4j graph memory."""
-    response = _chain.invoke({"content": content})
-    raw = response.content.strip()
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-
-    items = json.loads(raw)
-    if not isinstance(items, list):
-        items = [items]
-
-    stored = []
-    for item in items:
-        decision_id = neo_store(
-            subject=item.get("topic", "general"),
-            action=item.get("decision", ""),
-            reason=item.get("reason", ""),
-            source=source,
-            people=item.get("people") or [],
-            impact=item.get("impact", ""),
-            alternatives=item.get("alternatives") or [],
-            timestamp=str(item.get("timestamp") or ""),
-        )
-        item["decision_id"] = decision_id
-        stored.append(item)
-        logger.info(f"[INGEST TOOL] Stored: '{item.get('decision', '')[:60]}'")
-
-    # store raw text in Chroma
+    # Always store raw text in Chroma first
     from db.chroma import chroma_store
-    chroma_store(content=content, source=source, metadata={"decision_count": len(stored)})
+    chroma_store(content=content, source=source, metadata={"status": "processing"})
     logger.info(f"[INGEST TOOL] Stored raw text in Chroma: {source}")
+    
+    # Try to extract and store decisions
+    try:
+        response = _chain.invoke({"content": content})
+        raw = response.content.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
 
-    return json.dumps({"ingested": len(stored), "items": stored})
+        items = json.loads(raw)
+        if not isinstance(items, list):
+            items = [items]
+
+        stored = []
+        neo4j_errors = []
+        
+        for item in items:
+            try:
+                decision_id = neo_store(
+                    subject=item.get("topic", "general"),
+                    action=item.get("decision", ""),
+                    reason=item.get("reason", ""),
+                    source=source,
+                    people=item.get("people") or [],
+                    impact=item.get("impact", ""),
+                    alternatives=item.get("alternatives") or [],
+                    timestamp=str(item.get("timestamp") or ""),
+                )
+                item["decision_id"] = decision_id
+                stored.append(item)
+                logger.info(f"[INGEST TOOL] Stored: '{item.get('decision', '')[:60]}'")
+            except Exception as e:
+                logger.error(f"[INGEST TOOL] Neo4j error for item: {e}")
+                neo4j_errors.append(str(e))
+                item["decision_id"] = "neo4j_error"
+                stored.append(item)
+
+        result = {"ingested": len(stored), "items": stored}
+        if neo4j_errors:
+            result["neo4j_errors"] = neo4j_errors
+            result["note"] = "Some decisions failed to store in Neo4j but raw content is in ChromaDB"
+        
+        return json.dumps(result)
+        
+    except Exception as e:
+        logger.error(f"[INGEST TOOL] Extraction failed: {e}")
+        return json.dumps({
+            "ingested": 0,
+            "error": str(e),
+            "note": "Raw content stored in ChromaDB, but decision extraction failed"
+        })
 
 
 @tool
