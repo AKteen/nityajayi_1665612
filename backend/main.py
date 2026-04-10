@@ -37,22 +37,34 @@ async def health():
 
 @app.post("/ingest/upload")
 async def ingest_upload(file: UploadFile = File(...)):
-    """Upload a PDF — IngestionAgent extracts and stores decisions."""
+    """Upload a PDF or Excel file — IngestionAgent extracts and stores decisions."""
     try:
-        import fitz
         file_bytes = await file.read()
-        doc = fitz.open(stream=file_bytes, filetype="pdf")
-        raw_text = "\n".join(page.get_text() for page in doc)
+        filename = file.filename or "unknown"
+        file_ext = filename.lower().split('.')[-1]
+        
+        # Validate file type
+        if file_ext not in ['pdf', 'xlsx', 'xls']:
+            raise ValueError(f"Unsupported file type. Please upload PDF or Excel files (.pdf, .xlsx, .xls)")
+        
+        # Extract text based on file type
+        if file_ext in ['xlsx', 'xls']:
+            from ingestion.excel import extract_text_from_excel
+            raw_text = extract_text_from_excel(file_bytes, filename)
+        else:  # pdf
+            import fitz
+            doc = fitz.open(stream=file_bytes, filetype="pdf")
+            raw_text = "\n".join(page.get_text() for page in doc)
 
         from agents.ingestion_agent import run_ingestion_agent
-        result = run_ingestion_agent(content=raw_text, source=f"document:{file.filename}")
+        result = run_ingestion_agent(content=raw_text, source=f"document:{filename}")
         
         # Log activity
         activity_store.add_event(
             "ingest",
-            f"Document ingested: {file.filename}",
+            f"Document ingested: {filename}",
             f"Ingestion agent processed {len(raw_text)} characters",
-            f"document:{file.filename}"
+            f"document:{filename}"
         )
         
         return {"status": "success", "result": result}

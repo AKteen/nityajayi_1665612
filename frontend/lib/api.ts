@@ -90,6 +90,20 @@ export async function ingestFile(file: File): Promise<IngestSlackResponse> {
   return res.json();
 }
 
+export async function ingestExcel(file: File): Promise<IngestSlackResponse> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${BASE}/ingest/upload`, {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? "Excel ingest failed");
+  }
+  return res.json();
+}
+
 export async function ingestAudio(file: File): Promise<IngestSlackResponse & { transcript?: string }> {
   const form = new FormData();
   form.append("file", file);

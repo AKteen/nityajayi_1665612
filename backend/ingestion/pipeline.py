@@ -4,6 +4,7 @@ import logging
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from core.config import settings
+from ingestion.excel import extract_text_from_excel
 
 logger = logging.getLogger(__name__)
 
@@ -64,9 +65,21 @@ def _structure_and_store(raw_text: str, source: str) -> dict:
 
 
 def run_ingestion(file_bytes: bytes, filename: str, source: str = "document") -> dict:
-    doc = fitz.open(stream=file_bytes, filetype="pdf")
-    raw_text = "\n".join(page.get_text() for page in doc)
-    logger.info(f"[EXTRACT] '{filename}' → {len(raw_text)} chars")
+    # Detect file type by extension
+    file_ext = filename.lower().split('.')[-1]
+    
+    if file_ext in ['xlsx', 'xls']:
+        # Excel file
+        raw_text = extract_text_from_excel(file_bytes, filename)
+        logger.info(f"[EXTRACT] Excel '{filename}' → {len(raw_text)} chars")
+    elif file_ext == 'pdf':
+        # PDF file
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        raw_text = "\n".join(page.get_text() for page in doc)
+        logger.info(f"[EXTRACT] PDF '{filename}' → {len(raw_text)} chars")
+    else:
+        raise ValueError(f"Unsupported file type: {file_ext}")
+    
     return _structure_and_store(raw_text, source)
 
 

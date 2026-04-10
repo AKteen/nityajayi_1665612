@@ -1,322 +1,386 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
-import { MessageSquare, Mail, GitBranch, Brain, ArrowRight, Zap } from "lucide-react";
+import { 
+  ArrowRight, Database, Brain, Network, 
+  MessageSquare, FileText, Mic, FileSpreadsheet, Search, Zap, GitBranch
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import Aurora from "@/components/Aurora";
 
 const features = [
   {
     icon: MessageSquare,
-    title: "Slack Memory",
+    title: "Slack Integration",
     description: "Ingest channel conversations and extract structured decisions, people, and context automatically.",
-    color: "text-orange-600",
-    border: "hover:border-orange-400",
-    glow: "hover:shadow-orange-400/20",
+    delay: 0.1,
   },
   {
-    icon: Mail,
-    title: "Gmail Context",
-    description: "Connect email threads to decisions. Surface who said what and when across your organization.",
-    color: "text-blue-600",
-    border: "hover:border-blue-400",
-    glow: "hover:shadow-blue-400/20",
+    icon: FileText,
+    title: "PDF Documents",
+    description: "Upload PDF files to extract decisions and organizational knowledge using AI agents.",
+    delay: 0.2,
   },
   {
-    icon: GitBranch,
-    title: "Knowledge Graph",
-    description: "Neo4j-powered decision graph. Understand relationships, dependencies, and impact chains.",
-    color: "text-green-600",
-    border: "hover:border-green-400",
-    glow: "hover:shadow-green-400/20",
+    icon: FileSpreadsheet,
+    title: "Excel Spreadsheets",
+    description: "Process Excel files to capture structured decision data and store in knowledge graph.",
+    delay: 0.3,
   },
   {
-    icon: Brain,
-    title: "AI Reasoning",
-    description: "LangGraph agents route queries to the right tool — QUERY for history, IMPACT for what-if analysis.",
-    color: "text-purple-600",
-    border: "hover:border-purple-400",
-    glow: "hover:shadow-purple-400/20",
+    icon: Mic,
+    title: "Audio & Video",
+    description: "Transcribe meetings and conversations using Whisper, then extract key decisions.",
+    delay: 0.4,
   },
 ];
 
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.1 } },
-};
+const agents = [
+  {
+    icon: GitBranch,
+    title: "Router Agent",
+    description: "Automatically classifies incoming queries and routes them to the appropriate specialized agent.",
+  },
+  {
+    icon: Search,
+    title: "Query Agent",
+    description: "Answers questions about history, decisions, and people using Neo4j and ChromaDB.",
+  },
+  {
+    icon: Zap,
+    title: "Impact Agent",
+    description: "Performs what-if analysis and risk assessment by finding related decisions.",
+  },
+  {
+    icon: FileText,
+    title: "Ingestion Agent",
+    description: "Extracts structured decisions, people, and context from documents automatically.",
+  },
+];
 
-const item = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
+const techStack = [
+  { name: "Neo4j AuraDB", description: "Graph database for decision relationships" },
+  { name: "ChromaDB", description: "Vector database for semantic search" },
+  { name: "Groq Llama 3.3 70B", description: "LLM for reasoning and extraction" },
+  { name: "LangGraph", description: "Agent orchestration framework" },
+];
 
 export default function HomePage() {
-  return (
-    <div className="max-w-6xl mx-auto px-6 py-20">
-      {/* Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 32 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-center mb-20"
-      >
-        {/* Animated gradient orb */}
-        <motion.div
-          animate={{ 
-            scale: [1, 1.3, 1], 
-            opacity: [0.3, 0.6, 0.3],
-            rotate: [0, 360]
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-1/2 top-32 -translate-x-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
-          style={{
-            background: "radial-gradient(circle, #FFD4B060 0%, #FF9A5640 20%, #FFB88C30 40%, #FFA50020 60%, transparent 80%)",
-            filter: "blur(80px)",
-          }}
-        />
-        
-        {/* Additional floating orbs */}
-        <motion.div
-          animate={{ 
-            x: [0, 100, 0],
-            y: [0, -50, 0],
-            scale: [1, 1.2, 1],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute right-20 top-40 w-[300px] h-[300px] rounded-full pointer-events-none"
-          style={{
-            background: "radial-gradient(circle, #A8DAFF40 0%, #6B9BD130 50%, transparent 70%)",
-            filter: "blur(60px)",
-          }}
-        />
+  const { scrollYProgress } = useScroll();
+  const y = useTransform(scrollYProgress, [0, 1], [0, -50]);
 
-        <div className="relative">
+  return (
+    <div className="relative overflow-x-hidden">
+      {/* Hero Section with Aurora Background */}
+      <motion.section 
+        style={{ y }}
+        className="relative min-h-[85vh] flex items-center justify-center px-6 py-20 overflow-hidden bg-gradient-to-b from-blue-900 via-purple-900 to-blue-900"
+      >
+        {/* Aurora Background */}
+        <div className="absolute inset-0 z-0 mix-blend-screen">
+          <Aurora
+            colorStops={["#5c92ff","#B19EEF","#5227FF"]}
+            blend={0.85}
+            amplitude={1.0}
+            speed={0.7}
+          />
+        </div>
+
+        {/* Hero Content */}
+        <div className="max-w-6xl mx-auto text-center space-y-8 relative z-10">
+          {/* Main Heading */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-            whileHover={{ scale: 1.08, rotate: 2 }}
-            transition={{ type: "tween" }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-orange-400 bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 text-xs mb-6 cursor-default shadow-lg"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="space-y-6"
           >
             <motion.div
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, type: "spring" }}
+              className="flex justify-center mb-8"
             >
-              <Zap size={11} />
+              <img 
+                src="/logo1.png" 
+                alt="Recall.AI Logo" 
+                className="h-32 md:h-40 lg:h-48 w-auto object-contain"
+              />
             </motion.div>
-            Powered by LangGraph + Groq llama-3.3-70b
+            <p className="text-2xl md:text-3xl font-bold text-white">
+              Remember The "Why"
+            </p>
           </motion.div>
 
-          <motion.h1 
-            className="text-5xl font-bold tracking-tight text-gray-900 mb-4 leading-tight"
+          {/* CTA Buttons */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-wrap items-center justify-center gap-4"
           >
-            <motion.span
-              whileHover={{ scale: 1.05, display: "inline-block" }}
-              className="inline-block"
-            >
-              Organizational Memory
-            </motion.span>
-            <br />
-            <motion.span 
-              className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 bg-clip-text text-transparent"
-              animate={{ 
-                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-              }}
-              transition={{ duration: 5, repeat: Infinity }}
-              style={{ backgroundSize: "200% 200%" }}
-              whileHover={{ scale: 1.05, display: "inline-block" }}
-            >
-              & Reasoning Engine
-            </motion.span>
-          </motion.h1>
-
-          <motion.p 
-            className="text-gray-700 text-lg max-w-2xl mx-auto mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            whileHover={{ scale: 1.02, color: "#2D2416" }}
-          >
-            Query your company&apos;s institutional knowledge. Understand why decisions were made,
-            who was involved, and what breaks if things change.
-          </motion.p>
-
-          <motion.div 
-            className="flex items-center justify-center gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link
-                href="/query"
-                className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-400 hover:from-orange-400 hover:via-amber-400 hover:to-orange-300 text-white text-base font-bold transition-all sunrise-glow group relative overflow-hidden shadow-2xl"
-              >
+            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100 shadow-lg">
+              <Link href="/query">
+                Start Querying
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
-                  initial={{ x: "-100%" }}
-                  whileHover={{ x: "100%" }}
-                  transition={{ duration: 0.6 }}
-                />
-                <span className="relative z-10">Start Querying</span>
-                <motion.div
-                  className="relative z-10"
                   animate={{ x: [0, 5, 0] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 >
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={20} />
                 </motion.div>
               </Link>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link
-                href="/activity"
-                className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl border-3 border-orange-400 hover:border-orange-500 bg-white/90 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-gray-800 hover:text-orange-700 text-base font-bold transition-all relative overflow-hidden group shadow-xl"
-              >
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-orange-400/0 via-orange-400/20 to-orange-400/0"
-                  initial={{ x: "-100%" }}
-                  whileHover={{ x: "100%" }}
-                  transition={{ duration: 0.8 }}
-                />
-                <span className="relative z-10">View Activity</span>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/20">
+              <Link href="/activity">
+                View Activity
               </Link>
-            </motion.div>
+            </Button>
           </motion.div>
-        </div>
-      </motion.div>
 
-      {/* Feature Cards */}
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-      >
-        {features.map(({ icon: Icon, title, description, color, border, glow }, index) => (
+          {/* Stats */}
           <motion.div
-            key={title}
-            variants={item}
-            whileHover={{ scale: 1.06, y: -10, rotateY: 3 }}
-            whileTap={{ scale: 0.98 }}
-            className={`glass-card rounded-2xl p-8 border-2 border-[var(--card-border)] ${border} hover:shadow-2xl ${glow} transition-all duration-300 cursor-pointer group relative overflow-hidden`}
-            style={{ transformStyle: "preserve-3d" }}
-          >
-            {/* Animated background gradient on hover */}
-            <motion.div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              style={{
-                background: `radial-gradient(circle at 50% 50%, ${color.includes('orange') ? 'rgba(255, 154, 86, 0.15)' : color.includes('blue') ? 'rgba(107, 155, 209, 0.15)' : color.includes('green') ? 'rgba(72, 187, 120, 0.15)' : 'rgba(167, 139, 250, 0.15)'}, transparent 70%)`,
-              }}
-            />
-            
-            {/* Shimmer effect */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-              initial={{ x: "-100%" }}
-              whileHover={{ x: "100%" }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
-            />
-
-            <div className="flex items-start gap-4 relative z-10">
-              <motion.div 
-                className={`p-4 rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 shrink-0 group-hover:from-orange-100 group-hover:to-amber-100 transition-all border-2 border-transparent group-hover:${border} shadow-md`}
-                whileHover={{ rotate: 20, scale: 1.15 }}
-                transition={{ type: "tween", duration: 0.6 }}
-              >
-                <Icon size={28} className={`${color} group-hover:drop-shadow-[0_0_12px_currentColor]`} />
-              </motion.div>
-              <div>
-                <motion.h3 
-                  className="font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors text-base"
-                  whileHover={{ x: 5 }}
-                >
-                  {title}
-                </motion.h3>
-                <motion.p 
-                  className="text-sm text-gray-600 leading-relaxed group-hover:text-gray-800 transition-colors"
-                  initial={{ opacity: 0.8 }}
-                  whileHover={{ opacity: 1 }}
-                >
-                  {description}
-                </motion.p>
-              </div>
-            </div>
-
-            {/* Corner accent */}
-            <motion.div
-              className={`absolute top-0 right-0 w-20 h-20 ${color} opacity-0 group-hover:opacity-10 blur-2xl transition-opacity duration-500`}
-            />
-          </motion.div>
-        ))}
-      </motion.div>
-
-      {/* Stats row */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.7, duration: 0.5 }}
-        className="mt-16 grid grid-cols-3 gap-4 text-center"
-      >
-        {[
-          { label: "Data Sources", value: "4", color: "from-green-400 to-emerald-500" },
-          { label: "Agent Types", value: "2", color: "from-orange-400 to-amber-500" },
-          { label: "LLM", value: "Llama 3.3", color: "from-blue-400 to-cyan-500" },
-        ].map(({ label, value, color }, i) => (
-          <motion.div 
-            key={label} 
-            className="glass-card rounded-2xl p-8 border-2 border-[var(--card-border)] hover:border-orange-400 transition-all duration-300 cursor-pointer group relative overflow-hidden shadow-lg"
-            whileHover={{ scale: 1.1, y: -10, rotateZ: 2 }}
-            transition={{ type: "tween" }}
-            whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 + i * 0.1 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto pt-8"
           >
-            {/* Animated gradient background */}
-            <motion.div
-              className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}
-            />
-            
-            {/* Shimmer effect */}
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-              initial={{ x: "-100%" }}
-              whileHover={{ x: "100%" }}
-              transition={{ duration: 0.6 }}
-            />
-
-            <motion.div 
-              className={`text-4xl font-black bg-gradient-to-br ${color} bg-clip-text text-transparent mb-3 relative z-10`}
-              whileHover={{ scale: 1.2, rotate: 8 }}
-              transition={{ type: "tween", duration: 0.3 }}
-            >
-              {value}
-            </motion.div>
-            <motion.div 
-              className="text-xs text-gray-600 group-hover:text-orange-600 transition-colors uppercase tracking-wider font-medium relative z-10"
-              whileHover={{ y: -2 }}
-            >
-              {label}
-            </motion.div>
-
-            {/* Corner glow */}
-            <motion.div
-              className={`absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr ${color} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500`}
-            />
+            {[
+              { label: "Data Sources", value: "4" },
+              { label: "AI Agents", value: "4" },
+              { label: "Databases", value: "2" },
+              { label: "LLM Model", value: "70B" },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6 + i * 0.1 }}
+                whileHover={{ scale: 1.05, y: -5 }}
+                className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/40 hover:border-white/60 transition-all shadow-xl hover:bg-white/30"
+              >
+                <div className="text-3xl font-black text-white">{stat.value}</div>
+                <div className="text-xs text-white/80 uppercase tracking-wider mt-1">{stat.label}</div>
+              </motion.div>
+            ))}
           </motion.div>
-        ))}
-      </motion.div>
+        </div>
+      </motion.section>
+
+      {/* Data Sources Section */}
+      <section className="relative px-6 py-16 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <Badge variant="secondary" className="mb-4 border-blue-300 bg-blue-50 text-blue-700">
+              <Database size={14} />
+              Data Ingestion
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
+              Ingest from Multiple Sources
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Upload PDFs, Excel files, audio/video, or connect Slack channels. Our AI agents automatically extract decisions and store them in the knowledge graph.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {features.map((feature, i) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: feature.delay, type: "spring" }}
+                whileHover={{ scale: 1.02, y: -5 }}
+              >
+                <Card className="h-full border-2 border-blue-200 hover:border-blue-400 hover:shadow-xl transition-all group cursor-pointer bg-white/80 backdrop-blur-sm">
+                  <CardHeader>
+                    <div className="flex items-start gap-4">
+                      <motion.div
+                        whileHover={{ rotate: 360, scale: 1.1 }}
+                        transition={{ duration: 0.6 }}
+                        className="p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg"
+                      >
+                        <feature.icon className="w-6 h-6 text-white" />
+                      </motion.div>
+                      <div className="flex-1">
+                        <CardTitle className="group-hover:text-blue-600 transition-colors">
+                          {feature.title}
+                        </CardTitle>
+                        <CardDescription className="mt-2">
+                          {feature.description}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* AI Agents Section */}
+      <section className="relative px-6 py-16 bg-gradient-to-b from-blue-50 to-white">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <Badge variant="secondary" className="mb-4 border-blue-300 bg-blue-50 text-blue-700">
+              <Brain size={14} />
+              AI Agents
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
+              Intelligent Query Routing
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              A router agent automatically classifies your question and routes it to the specialized agent for optimal results.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {agents.map((agent, i) => (
+              <motion.div
+                key={agent.title}
+                initial={{ opacity: 0, y: 50, rotateX: -15 }}
+                whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: i * 0.15, type: "spring", stiffness: 100 }}
+                whileHover={{ scale: 1.05, y: -8, rotateY: 5 }}
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                <Card className="h-full border-2 border-blue-200 hover:border-blue-400 hover:shadow-2xl transition-all group cursor-pointer bg-white/80 backdrop-blur-sm">
+                  <CardHeader>
+                    <div className="flex items-start gap-4">
+                      <motion.div
+                        whileHover={{ rotate: 360, scale: 1.1 }}
+                        transition={{ duration: 0.6 }}
+                        className="p-4 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg"
+                      >
+                        <agent.icon className="w-6 h-6 text-white" />
+                      </motion.div>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg group-hover:text-blue-600 transition-colors mb-2">
+                          {agent.title}
+                        </CardTitle>
+                        <CardDescription className="text-sm">
+                          {agent.description}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Tech Stack Section */}
+      <section className="relative px-6 py-16 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <Badge variant="secondary" className="mb-4 border-blue-300 bg-blue-50 text-blue-700">
+              <Network size={14} />
+              Technology Stack
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
+              Built with Modern Technologies
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Powered by industry-leading databases and AI models for enterprise-grade knowledge management.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {techStack.map((tech, i) => (
+              <motion.div
+                key={tech.name}
+                initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, type: "spring", stiffness: 100 }}
+                whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(59, 130, 246, 0.3)" }}
+                className="bg-white/80 backdrop-blur-sm rounded-xl p-6 border-2 border-blue-200 hover:border-blue-400 transition-all shadow-sm"
+              >
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{tech.name}</h3>
+                <p className="text-sm text-gray-600">{tech.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative px-6 py-20 bg-gradient-to-br from-blue-600 via-cyan-600 to-blue-700 overflow-hidden">
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-white/10 blur-3xl"
+        />
+        <motion.div
+          animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.15, 0.1] }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-white/10 blur-3xl"
+        />
+        
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="space-y-8"
+          >
+            <h2 className="text-4xl md:text-5xl font-black text-white">
+              Ready to Query Your Knowledge Base?
+            </h2>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+              Start ingesting data from Slack, PDFs, Excel, or audio files and query your organizational memory instantly.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <Button 
+                asChild 
+                size="lg" 
+                className="bg-white hover:bg-gray-100 shadow-2xl"
+              >
+                <Link href="/query" className="text-white">
+                  Start Querying
+                  <ArrowRight size={20} className="text-white" />
+                </Link>
+              </Button>
+              <Button 
+                asChild 
+                size="lg" 
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white/10"
+              >
+                <Link href="/activity">
+                  View Activity
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
     </div>
   );
 }

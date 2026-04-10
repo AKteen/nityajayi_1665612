@@ -4,6 +4,8 @@ python-multipart
 python-dotenv
 pydantic-settings
 pymupdf
+openpyxl
+pandas
 
 # LLM / Agent
 langchain

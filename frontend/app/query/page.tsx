@@ -4,9 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send, Loader2, RotateCcw, ChevronDown, ChevronUp,
-  Upload, FileText, CheckCircle2, XCircle, X, MessageSquare, Hash, Mic,
+  Upload, FileText, CheckCircle2, XCircle, X, MessageSquare, Hash, Mic, FileSpreadsheet,
 } from "lucide-react";
-import { queryKnowledge, ingestFile, ingestSlack, ingestAudio, type QueryResponse } from "@/lib/api";
+import { queryKnowledge, ingestFile, ingestSlack, ingestAudio, ingestExcel, type QueryResponse } from "@/lib/api";
 import SourceCard from "@/components/SourceCard";
 import AgentBadge from "@/components/AgentBadge";
 
@@ -17,7 +17,7 @@ const SUGGESTIONS = [
   "What alternatives were considered for the auth system?",
 ];
 
-type Tab = "query" | "upload" | "slack" | "audio";
+type Tab = "query" | "upload" | "excel" | "slack" | "audio";
 type IngestState = "idle" | "loading" | "success" | "error";
 
 export default function QueryPage() {
@@ -51,6 +51,14 @@ export default function QueryPage() {
   const [slackState, setSlackState] = useState<IngestState>("idle");
   const [slackResult, setSlackResult] = useState<string | null>(null);
   const [slackError, setSlackError] = useState<string | null>(null);
+
+  // ── Excel Upload state ────────────────────────────────────────
+  const [excelDragOver, setExcelDragOver] = useState(false);
+  const [selectedExcel, setSelectedExcel] = useState<File | null>(null);
+  const [excelState, setExcelState] = useState<IngestState>("idle");
+  const [excelResult, setExcelResult] = useState<string | null>(null);
+  const [excelError, setExcelError] = useState<string | null>(null);
+  const excelInputRef = useRef<HTMLInputElement>(null);
 
   // ── Audio state ───────────────────────────────────────────────
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -134,6 +142,49 @@ export default function QueryPage() {
     setUploadResult(null);
     setUploadError(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  // ── Excel handlers ────────────────────────────────────────────
+  function handleExcelDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setExcelDragOver(false);
+    const file = e.dataTransfer.files[0];
+    const ext = file?.name.toLowerCase().split('.').pop();
+    if (ext === 'xlsx' || ext === 'xls') setSelectedExcel(file);
+  }
+
+  function handleExcelSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) setSelectedExcel(file);
+  }
+
+  async function handleExcelUpload() {
+    if (!selectedExcel) return;
+    setExcelState("loading");
+    setExcelError(null);
+    setExcelResult(null);
+    try {
+      const data = await ingestExcel(selectedExcel);
+      setExcelState("success");
+      setContextLabel(selectedExcel.name);
+      setSourceContext("document:");
+      setExcelResult(
+        typeof data.result === "object"
+          ? JSON.stringify(data.result, null, 2)
+          : String(data.result)
+      );
+    } catch (e) {
+      setExcelState("error");
+      setExcelError(e instanceof Error ? e.message : "Excel upload failed");
+    }
+  }
+
+  function resetExcel() {
+    setSelectedExcel(null);
+    setExcelState("idle");
+    setExcelResult(null);
+    setExcelError(null);
+    if (excelInputRef.current) excelInputRef.current.value = "";
   }
 
   // ── Slack handlers ────────────────────────────────────────────
@@ -262,6 +313,7 @@ export default function QueryPage() {
   const TABS: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "query", label: "Query", icon: Send },
     { id: "upload", label: "Upload PDF", icon: Upload },
+    { id: "excel", label: "Upload Excel", icon: FileSpreadsheet },
     { id: "audio", label: "Audio/Video", icon: Mic },
     { id: "slack", label: "Slack", icon: MessageSquare },
   ];
@@ -608,6 +660,129 @@ export default function QueryPage() {
                 result={uploadResult}
                 onQuery={() => setTab("query")}
                 onReset={resetUpload}
+                resetLabel="Upload another"
+              />
+            )}
+          </motion.div>
+        )}
+
+        {/* ── UPLOAD EXCEL TAB ────────────────────────────────────── */}
+        {tab === "excel" && (
+          <motion.div
+            key="excel"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-5"
+          >
+            <p className="text-sm text-gray-600">
+              Upload an Excel file — the IngestionAgent extracts decisions, people, and context,
+              then stores them in Neo4j + ChromaDB for querying.
+            </p>
+
+            {/* Drop zone */}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setExcelDragOver(true); }}
+              onDragLeave={() => setExcelDragOver(false)}
+              onDrop={handleExcelDrop}
+              onClick={() => excelState !== "success" && excelInputRef.current?.click()}
+              className={`rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer p-10 text-center ${
+                excelDragOver
+                  ? "border-orange-500 bg-orange-50"
+                  : selectedExcel
+                  ? "border-green-500/50 bg-green-50"
+                  : "border-[var(--card-border)] hover:border-orange-400 hover:bg-orange-50/30"
+              }`}
+            >
+              <input
+                ref={excelInputRef}
+                type="file"
+                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                onChange={handleExcelSelect}
+                className="hidden"
+              />
+              {selectedExcel ? (
+                <div className="flex flex-col items-center gap-3">
+                  <FileSpreadsheet size={36} className="text-green-400" />
+                  <div>
+                    <p className="text-gray-900 font-medium text-sm">{selectedExcel.name}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      {(selectedExcel.size / 1024).toFixed(1)} KB · Excel
+                    </p>
+                  </div>
+                  {excelState !== "success" && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); resetExcel(); }}
+                      className="text-xs text-gray-600 hover:text-red-500 transition-colors flex items-center gap-1"
+                    >
+                      <X size={12} /> Remove
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <FileSpreadsheet size={36} className="text-gray-500" />
+                  <div>
+                    <p className="text-gray-900 text-sm font-medium">Drop your Excel file here</p>
+                    <p className="text-xs text-gray-600 mt-1">or click to browse · .xlsx or .xls</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Ingest button */}
+            {selectedExcel && excelState === "idle" && (
+              <button
+                onClick={handleExcelUpload}
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-white text-base font-bold transition-all flex items-center justify-center gap-3 sunrise-glow shadow-xl"
+              >
+                <FileSpreadsheet size={20} /> Ingest Excel
+              </button>
+            )}
+
+            {/* Progress */}
+            {excelState === "loading" && (
+              <div className="space-y-3">
+                <div className="w-full py-3 rounded-xl bg-orange-500/50 text-white text-sm font-medium flex items-center justify-center gap-2">
+                  <Loader2 size={16} className="animate-spin" /> Ingesting Excel…
+                </div>
+                <div className="w-full h-1 rounded-full bg-orange-100 overflow-hidden">
+                  <motion.div
+                    className="h-full bg-orange-500 rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: "90%" }}
+                    transition={{ duration: 8, ease: "easeOut" }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Error */}
+            {excelState === "error" && excelError && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 rounded-xl border border-red-500/30 bg-red-500/10 flex items-start gap-3"
+              >
+                <XCircle size={16} className="text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm text-red-400 font-medium">Excel ingestion failed</p>
+                  <p className="text-xs text-red-400/70 mt-1">{excelError}</p>
+                </div>
+                <button onClick={resetExcel} className="text-red-400/60 hover:text-red-400">
+                  <RotateCcw size={14} />
+                </button>
+              </motion.div>
+            )}
+
+            {/* Success */}
+            {excelState === "success" && (
+              <IngestSuccess
+                label="Excel ingested successfully"
+                result={excelResult}
+                onQuery={() => setTab("query")}
+                onReset={resetExcel}
                 resetLabel="Upload another"
               />
             )}

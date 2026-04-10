@@ -1,20 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FFF8F0;
-  --foreground: #2D2416;
-  --card: #FFEFE0;
-  --card-border: #FFD4B0;
-  --accent: #FF9A56;
-  --accent-glow: #FF9A5680;
-  --muted: #8B7355;
-  --secondary: #6B9BD1;
-  --secondary-glow: #6B9BD180;
-  --warm-orange: #FF8C42;
-  --warm-peach: #FFB88C;
-  --warm-coral: #FF6B6B;
-  --soft-blue: #A8DAFF;
-  --golden: #FFD700;
+  --background: #F0F9FF;
+  --foreground: #1E293B;
+  --card: #FFFFFF;
+  --card-border: #BAE6FD;
+  --accent: #3B82F6;
+  --accent-glow: #3B82F680;
+  --muted: #64748B;
+  --secondary: #06B6D4;
+  --secondary-glow: #06B6D480;
 }
 
 @theme inline {
@@ -28,17 +23,18 @@
 }
 
 body {
-  background: linear-gradient(135deg, #FFF8F0 0%, #FFE5D0 25%, #FFDAB9 50%, #FFE5D0 75%, #FFF8F0 100%);
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 25%, #BAE6FD 50%, #E0F2FE 75%, #F0F9FF 100%);
   background-size: 400% 400%;
   animation: gradient-shift 15s ease infinite;
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, sans-serif;
+  font-family: 'Poppins', var(--font-geist-sans), Arial, sans-serif;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* Animated gradient background */
 .gradient-bg {
-  background: linear-gradient(135deg, #FFF8F0 0%, #FFE5D0 25%, #FFDAB9 50%, #FFE5D0 75%, #FFF8F0 100%);
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 25%, #BAE6FD 50%, #E0F2FE 75%, #F0F9FF 100%);
   background-size: 400% 400%;
   animation: gradient-shift 15s ease infinite;
 }
