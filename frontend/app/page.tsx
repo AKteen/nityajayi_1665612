@@ -167,22 +167,23 @@ export default function HomePage() {
                   </Button>
                 </motion.div>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl flex flex-col bg-gradient-to-br from-white via-blue-50 to-cyan-50 my-8 p-6">
-                <DialogHeader className="flex-shrink-0 pb-4">
-                  <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                    Select from Existing Files
-                  </DialogTitle>
-                  <DialogDescription className="text-base text-gray-700">
-                    Choose a file you've already uploaded to query it directly
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="overflow-hidden bg-white rounded-xl p-3 shadow-inner" style={{ height: '300px' }}>
-                  <FileSelector onSelectFile={handleFileSelect} selectedSource={selectedSource} />
+              <DialogContent className="max-w-2xl bg-gradient-to-br from-white via-blue-50 to-cyan-50 p-0 gap-0 overflow-hidden h-[600px] flex flex-col">
+                <div className="p-6 pb-3 flex-shrink-0">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                      Select from Existing Files
+                    </DialogTitle>
+                    <DialogDescription className="text-base text-gray-700">
+                      Choose a file you've already uploaded to query it directly
+                    </DialogDescription>
+                  </DialogHeader>
                 </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-blue-200 flex-shrink-0">
-                  <Button variant="outline" onClick={() => setDialogOpen(false)} className="px-6 border-blue-300 hover:bg-blue-50">
-                    Cancel
-                  </Button>
+                <div className="px-6 flex-1 overflow-hidden">
+                  <div className="overflow-hidden bg-white rounded-xl p-3 shadow-inner h-full">
+                    <FileSelector onSelectFile={handleFileSelect} selectedSource={selectedSource} />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 px-6 pb-4 pt-3 border-t border-blue-200 flex-shrink-0">
                   <Button 
                     onClick={() => {
                       handleQueryExisting();
