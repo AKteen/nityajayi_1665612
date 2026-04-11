@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "Recall.AI",
   description: "Query company knowledge from Slack, Gmail, Neo4j, and ChromaDB via LangChain",
   icons: {
-    icon: '/brain-icon.svg',
+    icon: '/logo4.png',
   },
 };
 

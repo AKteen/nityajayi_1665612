@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { 
   ArrowRight, Database, Brain, Network, 
-  MessageSquare, FileText, Mic, FileSpreadsheet, Search, Zap, GitBranch, Upload, FolderOpen
+  MessageSquare, FileText, Mic, FileSpreadsheet, Search, Zap, GitBranch, Upload, FolderOpen, Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -157,13 +157,19 @@ export default function HomePage() {
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <motion.div
-                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileHover={{ scale: 1.05, y: -5 }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-                  <Button size="lg" variant="outline" className="border border-white text-white hover:bg-white/20">
-                    <FolderOpen size={20} />
-                    Select Existing File
+                  <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/20 hover:shadow-2xl hover:shadow-white/20 transition-all duration-300 relative overflow-hidden group">
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
+                      initial={{ x: '-100%' }}
+                      whileHover={{ x: '100%' }}
+                      transition={{ duration: 0.6 }}
+                    />
+                    <FolderOpen size={20} className="relative z-10 group-hover:rotate-12 transition-transform duration-300" />
+                    <span className="relative z-10">Select Existing File</span>
                   </Button>
                 </motion.div>
               </DialogTrigger>
@@ -198,26 +204,39 @@ export default function HomePage() {
             </Dialog>
 
             <motion.div
-              whileHover={{ scale: 1.05, y: -2 }}
+              whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <Button asChild size="lg" variant="outline" className="border border-sky-500 text-sky-500 hover:bg-sky-500/20">
+              <Button asChild size="lg" className="bg-white text-[#00BFFF] hover:bg-white hover:shadow-2xl hover:shadow-[#00BFFF]/60 transition-all duration-300 relative overflow-hidden group border-2 border-[#00BFFF]">
                 <Link href="/query">
-                  <Upload size={20} />
-                  Upload New File
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-[#00BFFF]/0 via-[#00BFFF]/20 to-[#00BFFF]/0"
+                    initial={{ x: '-100%' }}
+                    whileHover={{ x: '100%' }}
+                    transition={{ duration: 0.6 }}
+                  />
+                  <Upload size={20} className="relative z-10 group-hover:rotate-12 transition-transform duration-300" />
+                  <span className="relative z-10 font-bold">Upload New File</span>
                 </Link>
               </Button>
             </motion.div>
 
             <motion.div
-              whileHover={{ scale: 1.05, y: -2 }}
+              whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <Button asChild size="lg" variant="outline" className="border border-white text-white hover:bg-white/20">
+              <Button asChild size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/20 hover:shadow-2xl hover:shadow-white/20 transition-all duration-300 relative overflow-hidden group">
                 <Link href="/activity">
-                  View Activity
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
+                    initial={{ x: '-100%' }}
+                    whileHover={{ x: '100%' }}
+                    transition={{ duration: 0.6 }}
+                  />
+                  <Activity size={20} className="relative z-10 group-hover:rotate-12 transition-transform duration-300" />
+                  <span className="relative z-10">View Activity</span>
                 </Link>
               </Button>
             </motion.div>

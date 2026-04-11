@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, Brain } from "lucide-react";
+import { Mail, Lock, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
@@ -38,13 +38,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-20">
+    <div className="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-b from-blue-50 via-white to-cyan-50">
       <motion.div
         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3], rotate: [0, 180, 360] }}
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(circle, #FFD4B060 0%, #FF9A5640 30%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(6, 182, 212, 0.1) 30%, transparent 70%)",
           filter: "blur(80px)",
         }}
       />
@@ -53,19 +53,15 @@ export default function LoginPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="glass-card rounded-3xl p-10 border-2 border-[var(--card-border)] shadow-2xl max-w-md w-full relative z-10"
+        className="glass-card rounded-3xl p-10 border-2 border-blue-200 shadow-2xl max-w-md w-full relative z-10 bg-white/90 backdrop-blur-md"
       >
-        <motion.div
-          whileHover={{ rotate: 360, scale: 1.2 }}
-          transition={{ duration: 0.6 }}
-          className="flex justify-center mb-6"
-        >
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 shadow-lg">
-            <Brain size={40} className="text-orange-600" />
+        <div className="flex justify-center mb-6">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 shadow-lg">
+            <img src="/logo2.png" alt="Logo" className="w-10 h-10" />
           </div>
-        </motion.div>
+        </div>
 
-        <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Welcome Back</h1>
+        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">Welcome Back</h1>
         <p className="text-center text-gray-600 mb-8">Sign in to access your knowledge base</p>
 
         <form onSubmit={handleLogin} className="space-y-5">
@@ -77,7 +73,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-orange-200 focus:border-orange-400 focus:outline-none transition-all glow-input bg-white/90"
+                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-blue-200 focus:border-blue-400 focus:outline-none transition-all bg-white/90"
                 placeholder="you@example.com"
                 required
               />
@@ -92,7 +88,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-orange-200 focus:border-orange-400 focus:outline-none transition-all glow-input bg-white/90"
+                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-blue-200 focus:border-blue-400 focus:outline-none transition-all bg-white/90"
                 placeholder="••••••••"
                 required
               />
@@ -114,7 +110,7 @@ export default function LoginPage() {
             whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={loading}
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-400 text-white font-bold text-base sunrise-glow flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full py-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-bold text-base shadow-xl border-2 border-blue-400 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
           >
             {loading ? "Signing in..." : "Sign In"}
             {!loading && <ArrowRight size={18} />}
@@ -122,12 +118,12 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center space-y-3">
-          <Link href="/forgot-password" className="block text-sm text-orange-600 hover:text-orange-700 font-medium">
+          <Link href="/forgot-password" className="block text-sm text-blue-600 hover:text-blue-700 font-medium">
             Forgot password?
           </Link>
           <p className="text-sm text-gray-600">
             Don't have an account?{" "}
-            <Link href="/signup" className="text-orange-600 hover:text-orange-700 font-bold">
+            <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-bold">
               Sign up
             </Link>
           </p>

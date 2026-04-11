@@ -21,12 +21,12 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-3 mb-6">
               <img 
-                src="/logo2.png" 
+                src="/logo4.png" 
                 alt="Recall.AI" 
                 className="h-12 w-auto object-contain"
               />
               <img 
-                src="/logo1.png" 
+                src="/logo3.png" 
                 alt="Recall.AI" 
                 className="h-10 w-auto object-contain"
               />

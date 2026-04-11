@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Mail, ArrowRight, Brain, ArrowLeft } from "lucide-react";
+import { Mail, ArrowRight, ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function ForgotPasswordPage() {
@@ -36,13 +36,13 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-20">
+    <div className="min-h-screen flex items-center justify-center px-6 py-20 bg-gradient-to-b from-blue-50 via-white to-cyan-50">
       <motion.div
         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3], rotate: [0, 180, 360] }}
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(circle, #FFD4B060 0%, #FF9A5640 30%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(6, 182, 212, 0.1) 30%, transparent 70%)",
           filter: "blur(80px)",
         }}
       />
@@ -51,19 +51,15 @@ export default function ForgotPasswordPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="glass-card rounded-3xl p-10 border-2 border-[var(--card-border)] shadow-2xl max-w-md w-full relative z-10"
+        className="glass-card rounded-3xl p-10 border-2 border-blue-200 shadow-2xl max-w-md w-full relative z-10 bg-white/90 backdrop-blur-md"
       >
-        <motion.div
-          whileHover={{ rotate: 360, scale: 1.2 }}
-          transition={{ duration: 0.6 }}
-          className="flex justify-center mb-6"
-        >
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 shadow-lg">
-            <Brain size={40} className="text-orange-600" />
+        <div className="flex justify-center mb-6">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 shadow-lg">
+            <img src="/logo2.png" alt="Logo" className="w-10 h-10" />
           </div>
-        </motion.div>
+        </div>
 
-        <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">Reset Password</h1>
+        <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">Reset Password</h1>
         <p className="text-center text-gray-600 mb-8">Enter your email to receive a reset link</p>
 
         {success ? (
@@ -78,7 +74,7 @@ export default function ForgotPasswordPage() {
             </div>
             <Link
               href="/login"
-              className="flex items-center justify-center gap-2 text-orange-600 hover:text-orange-700 font-medium text-sm"
+              className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
             >
               <ArrowLeft size={16} />
               Back to login
@@ -94,7 +90,7 @@ export default function ForgotPasswordPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-orange-200 focus:border-orange-400 focus:outline-none transition-all glow-input bg-white/90"
+                  className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-blue-200 focus:border-blue-400 focus:outline-none transition-all bg-white/90"
                   placeholder="you@example.com"
                   required
                 />
@@ -116,7 +112,7 @@ export default function ForgotPasswordPage() {
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-400 text-white font-bold text-base sunrise-glow flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-bold text-base shadow-xl border-2 border-blue-400 flex items-center justify-center gap-2 disabled:opacity-50 transition-all"
             >
               {loading ? "Sending..." : "Send Reset Link"}
               {!loading && <ArrowRight size={18} />}
@@ -124,7 +120,7 @@ export default function ForgotPasswordPage() {
 
             <Link
               href="/login"
-              className="flex items-center justify-center gap-2 text-orange-600 hover:text-orange-700 font-medium text-sm"
+              className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
             >
               <ArrowLeft size={16} />
               Back to login
