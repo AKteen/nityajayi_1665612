@@ -1,12 +1,14 @@
 from typing import Optional
-from langchain.tools import tool
+from langchain_core.tools import StructuredTool
+from pydantic import BaseModel
 from db.neo import neo_search
 
 
-@tool
-def search_decisions(query: str, source_filter: Optional[str] = None) -> str:
-    """Search organizational memory for decisions, reasons, people and alternatives related to a topic or question.
-    Pass source_filter to restrict results to a specific ingested file or channel."""
+class SearchDecisionsInput(BaseModel):
+    query: str
+
+
+def _search_decisions(query: str, source_filter: Optional[str] = None) -> str:
     records = neo_search(query, source_filter=source_filter)
     if not records:
         return f"No decisions found for: {query}"
@@ -23,3 +25,11 @@ def search_decisions(query: str, source_filter: Optional[str] = None) -> str:
             f"ID: {r['id']}"
         )
     return "\n---\n".join(output)
+
+
+search_decisions = StructuredTool.from_function(
+    func=_search_decisions,
+    name="search_decisions",
+    description="Search organizational memory for decisions, reasons, people and alternatives related to a topic or question.",
+    args_schema=SearchDecisionsInput,
+)

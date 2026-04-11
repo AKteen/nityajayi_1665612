@@ -1,12 +1,18 @@
 from typing import Optional
-from langchain.tools import tool
+from langchain_core.tools import StructuredTool
+from pydantic import BaseModel
 from db.neo import neo_impact_search, neo_search as _neo_search
 
 
-@tool
-def find_related_decisions(topic: str, source_filter: Optional[str] = None) -> str:
-    """Find all decisions related to a topic, system, or person. Use to understand what is connected before simulating impact.
-    Pass source_filter to restrict results to a specific ingested file or channel."""
+class TopicInput(BaseModel):
+    topic: str
+
+
+class PersonInput(BaseModel):
+    person_name: str
+
+
+def _find_related_decisions(topic: str, source_filter: Optional[str] = None) -> str:
     records = neo_impact_search(topic, source_filter=source_filter)
     if not records:
         return f"No related decisions found for: {topic}"
@@ -24,10 +30,7 @@ def find_related_decisions(topic: str, source_filter: Optional[str] = None) -> s
     return "\n---\n".join(output)
 
 
-@tool
-def find_decisions_by_person(person_name: str, source_filter: Optional[str] = None) -> str:
-    """Find all decisions made by or involving a specific person.
-    Pass source_filter to restrict results to a specific ingested file or channel."""
+def _find_decisions_by_person(person_name: str, source_filter: Optional[str] = None) -> str:
     records = _neo_search(person_name, source_filter=source_filter)
     if not records:
         return f"No decisions found involving: {person_name}"
@@ -40,3 +43,18 @@ def find_decisions_by_person(person_name: str, source_filter: Optional[str] = No
             f"Impact: {r['impact']}"
         )
     return "\n---\n".join(output)
+
+
+find_related_decisions = StructuredTool.from_function(
+    func=_find_related_decisions,
+    name="find_related_decisions",
+    description="Find all decisions related to a topic, system, or person. Use to understand what is connected before simulating impact.",
+    args_schema=TopicInput,
+)
+
+find_decisions_by_person = StructuredTool.from_function(
+    func=_find_decisions_by_person,
+    name="find_decisions_by_person",
+    description="Find all decisions made by or involving a specific person.",
+    args_schema=PersonInput,
+)

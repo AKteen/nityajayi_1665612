@@ -91,6 +91,7 @@ export default function QueryPage() {
   const [imageResult, setImageResult] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [extractedText, setExtractedText] = useState<string | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Typing animation
@@ -291,7 +292,10 @@ export default function QueryPage() {
   // ── Image handlers ────────────────────────────────────────────
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) setImageFile(file);
+    if (file) {
+      setImageFile(file);
+      setImagePreviewUrl(URL.createObjectURL(file));
+    }
   }
 
   async function handleImageUpload() {
@@ -325,6 +329,8 @@ export default function QueryPage() {
     setExtractedText(null);
     setSourceContext(null);
     setContextLabel(null);
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImagePreviewUrl(null);
     if (imageInputRef.current) imageInputRef.current.value = "";
   }
 
@@ -384,10 +390,11 @@ export default function QueryPage() {
   }
 
   function switchTab(id: Tab) {
-    // Only clear context when switching TO an ingest tab (not when going to query)
     if (id !== "query") {
       setSourceContext(null);
       setContextLabel(null);
+      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+      setImagePreviewUrl(null);
     }
     setTab(id);
   }
@@ -459,8 +466,15 @@ export default function QueryPage() {
           >
             {/* Context banner */}
             {contextLabel && (
-              <div className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 text-xs">
-                <CheckCircle2 size={13} />
+              <div className="flex items-center gap-3 mb-4 px-4 py-2.5 rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 text-xs">
+                {imagePreviewUrl && sourceContext?.startsWith("image:") && (
+                  <img
+                    src={imagePreviewUrl}
+                    alt="selected"
+                    className="h-10 w-10 rounded object-cover shrink-0 border border-green-500/30"
+                  />
+                )}
+                {!imagePreviewUrl && <CheckCircle2 size={13} />}
                 <span>
                   Querying ONLY from{" "}
                   <span className="font-semibold">{contextLabel}</span>

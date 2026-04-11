@@ -10,11 +10,12 @@ logger = logging.getLogger(__name__)
 tools = [find_related_decisions, find_decisions_by_person, search_raw_memory]
 tools_map = {t.name: t for t in tools}
 
-llm = ChatGroq(
+llm_base = ChatGroq(
     api_key=settings.groq_api_key,
     model_name="llama-3.3-70b-versatile",
     temperature=0,
-).bind_tools(tools)
+)
+llm = llm_base.bind_tools(tools)
 
 SYSTEM = """You are an impact analysis agent.
 You answer "what if" and "what breaks" questions about organizational decisions.
@@ -41,43 +42,71 @@ Be direct and concise. Focus on the specific impact being asked about.
 Always cite sources."""
 
 
+def _run_tools_directly(question: str, source_filter: str = None) -> tuple:
+    tools_used, source_trace, tool_results = [], [], []
+    for tool_name, tool_fn in tools_map.items():
+        key = "topic" if tool_name == "find_related_decisions" else ("person_name" if tool_name == "find_decisions_by_person" else "query")
+        args = {key: question}
+        if source_filter:
+            args["source_filter"] = source_filter
+        result = tool_fn.invoke(args)
+        tools_used.append(tool_name)
+        source_trace.append({"tool": tool_name, "args": args, "result_preview": result[:200]})
+        tool_results.append(f"[{tool_name}]\n{result}")
+    return tool_results, tools_used, source_trace
+
+
 def run_impact_agent(question: str, source_filter: str = None) -> dict:
     logger.info(f"[IMPACT AGENT] Question: {question} | Filter: {source_filter}")
-    
-    # Add source filter context to the question if present
+
     if source_filter:
-        context_msg = f"IMPORTANT: User is querying ONLY from source '{source_filter}'. Do not use information from other sources."
         messages = [
             SystemMessage(content=SYSTEM),
-            SystemMessage(content=context_msg),
+            SystemMessage(content=f"IMPORTANT: User is querying ONLY from source '{source_filter}'. Do not use information from other sources."),
             HumanMessage(content=question)
         ]
     else:
         messages = [SystemMessage(content=SYSTEM), HumanMessage(content=question)]
-    
+
     tools_used = []
     source_trace = []
 
-    for _ in range(4):
-        response = llm.invoke(messages)
-        messages.append(response)
+    try:
+        for _ in range(4):
+            response = llm.invoke(messages)
+            messages.append(response)
 
-        if not response.tool_calls:
-            break
+            if not response.tool_calls:
+                break
 
-        for tc in response.tool_calls:
-            tools_used.append(tc["name"])
-            args = dict(tc["args"]) if tc["args"] else {}
-            if source_filter:
-                args["source_filter"] = source_filter
-            logger.info(f"[IMPACT AGENT] → tool: {tc['name']} args={args}")
-            result = tools_map[tc["name"]].invoke(args)
-            source_trace.append({
-                "tool": tc["name"],
-                "args": args,
-                "result_preview": result[:200] if len(result) > 200 else result,
-            })
-            messages.append(ToolMessage(content=result, tool_call_id=tc["id"]))
+            for tc in response.tool_calls:
+                tools_used.append(tc["name"])
+                args = dict(tc["args"]) if tc["args"] else {}
+                if source_filter:
+                    args["source_filter"] = source_filter
+                logger.info(f"[IMPACT AGENT] → tool: {tc['name']} args={args}")
+                result = tools_map[tc["name"]].invoke(args)
+                source_trace.append({
+                    "tool": tc["name"], "args": args,
+                    "result_preview": result[:200] if len(result) > 200 else result,
+                })
+                messages.append(ToolMessage(content=result, tool_call_id=tc["id"]))
+
+    except Exception as e:
+        if "tool_use_failed" in str(e) or "400" in str(e):
+            logger.warning(f"[IMPACT AGENT] Tool call failed, falling back to direct execution: {e}")
+            tool_results, tools_used, source_trace = _run_tools_directly(question, source_filter)
+            context = "\n\n".join(tool_results)
+            response = llm_base.invoke([
+                SystemMessage(content=SYSTEM),
+                HumanMessage(content=f"Context from knowledge base:\n{context}\n\nQuestion: {question}")
+            ])
+            return {
+                "answer": response.content,
+                "reasoning": f"Tools used (fallback): {', '.join(tools_used)}",
+                "source_trace": source_trace,
+            }
+        raise
 
     return {
         "answer": messages[-1].content,
