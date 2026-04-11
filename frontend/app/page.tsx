@@ -156,10 +156,16 @@ export default function HomePage() {
           >
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/20">
-                  <FolderOpen size={20} />
-                  Select Existing File
-                </Button>
+                <motion.div
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  <Button size="lg" variant="outline" className="border border-white text-white hover:bg-white/20">
+                    <FolderOpen size={20} />
+                    Select Existing File
+                  </Button>
+                </motion.div>
               </DialogTrigger>
               <DialogContent className="max-w-2xl flex flex-col bg-gradient-to-br from-white via-blue-50 to-cyan-50 my-8 p-6">
                 <DialogHeader className="flex-shrink-0 pb-4">
@@ -191,18 +197,30 @@ export default function HomePage() {
               </DialogContent>
             </Dialog>
 
-            <Button asChild size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/20">
-              <Link href="/query">
-                <Upload size={20} />
-                Upload New File
-              </Link>
-            </Button>
+            <motion.div
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              <Button asChild size="lg" variant="outline" className="border border-sky-500 text-sky-500 hover:bg-sky-500/20">
+                <Link href="/query">
+                  <Upload size={20} />
+                  Upload New File
+                </Link>
+              </Button>
+            </motion.div>
 
-            <Button asChild size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/20">
-              <Link href="/activity">
-                View Activity
-              </Link>
-            </Button>
+            <motion.div
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              <Button asChild size="lg" variant="outline" className="border border-white text-white hover:bg-white/20">
+                <Link href="/activity">
+                  View Activity
+                </Link>
+              </Button>
+            </motion.div>
           </motion.div>
 
           {/* Stats */}

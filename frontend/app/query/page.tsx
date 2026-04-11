@@ -377,48 +377,82 @@ export default function QueryPage() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-cyan-50">
+      <div className="max-w-4xl mx-auto px-6 py-12">
+      {/* Header with gradient background */}
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, type: "spring" }}
+        className="mb-12 text-center relative"
+      >
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="inline-block mb-4 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-sm font-bold shadow-lg"
+        >
+          🧠 AI-Powered Knowledge Engine
+        </motion.div>
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-5xl md:text-6xl font-black bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-600 bg-clip-text text-transparent mb-4 pb-2"
+        >
+          Knowledge Engine
+        </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="text-lg text-gray-600 max-w-2xl mx-auto"
+        >
+          Ingest from Slack, PDF, Excel, Audio/Video, or Images, then query across your entire organizational memory.
+        </motion.p>
+      </motion.div>
+
+      {/* Tabs with enhanced animations */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="mb-8"
+        transition={{ delay: 0.5, duration: 0.5 }}
+        className="flex justify-center mb-12"
       >
-        <h1 className="text-3xl font-black text-gray-900 mb-2">Knowledge Engine</h1>
-        <p className="text-base text-gray-700">
-          Ingest from Slack, PDF, Excel, Audio/Video, or Images, then query across your entire organizational memory.
-        </p>
-      </motion.div>
-
-      {/* Tabs */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
-        className="flex gap-2 p-1.5 rounded-2xl glass-card border-2 border-[var(--card-border)] mb-8 w-fit shadow-lg"
-      >
-        {TABS.map(({ id, label, icon: Icon }) => (
+        <div className="inline-flex flex-nowrap gap-3 p-2 rounded-3xl glass-card border-2 border-blue-200 shadow-2xl bg-white/80 backdrop-blur-md">
+        {TABS.map(({ id, label, icon: Icon }, index) => (
           <motion.button
             key={id}
             onClick={() => switchTab(id)}
-            whileHover={{ scale: 1.05 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 + index * 0.1 }}
+            whileHover={{ scale: 1.08, y: -3 }}
             whileTap={{ scale: 0.95 }}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all duration-200 border ${
+            className={`relative flex items-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold transition-all duration-300 border-2 overflow-hidden whitespace-nowrap ${
               tab === id
-                ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-xl border-blue-500"
-                : "text-gray-700 hover:text-gray-900 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 border-gray-200"
+                ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-2xl border-blue-400"
+                : "text-gray-700 hover:text-blue-600 bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 border-gray-200 hover:border-blue-300 shadow-md"
             }`}
           >
+            {tab === id && (
+              <motion.div
+                layoutId="activeTab"
+                className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
             <motion.div
-              animate={tab === id ? { rotate: 360 } : {}}
-              transition={{ duration: 0.5 }}
+              className="relative z-10"
+              animate={tab === id ? { rotate: [0, 360], scale: [1, 1.2, 1] } : {}}
+              transition={{ duration: 0.6 }}
             >
-              <Icon size={16} />
+              <Icon size={18} />
             </motion.div>
-            {label}
+            <span className="relative z-10">{label}</span>
           </motion.button>
         ))}
+        </div>
       </motion.div>
 
       <AnimatePresence mode="wait">
@@ -456,45 +490,69 @@ export default function QueryPage() {
               </div>
             )}
 
-            {/* Search bar */}
+            {/* Search bar with enhanced glow */}
             <motion.div 
-              className="flex items-center gap-3 rounded-2xl border-2 border-[var(--card-border)] glass-card glow-input transition-all duration-300 shadow-lg px-4 py-3"
-              whileHover={{ scale: 1.02 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+              className="relative flex items-center gap-3 rounded-2xl border-2 border-blue-200 glass-card transition-all duration-300 shadow-xl px-5 py-4 bg-white/90 backdrop-blur-md"
+              whileHover={{ scale: 1.02, boxShadow: "0 20px 60px rgba(59, 130, 246, 0.3)" }}
+              whileFocus={{ scale: 1.02 }}
             >
+              <motion.div
+                className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400/20 to-cyan-400/20 blur-xl"
+                animate={{ opacity: [0.5, 0.8, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
               <input
                 ref={inputRef}
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                 placeholder="Why did we choose React over Vue?"
-                className="flex-1 bg-transparent text-gray-900 placeholder:text-gray-500 outline-none text-base font-medium"
+                className="relative z-10 flex-1 bg-transparent text-gray-900 placeholder:text-gray-500 outline-none text-lg font-medium"
               />
               <motion.button
                 onClick={() => handleSubmit()}
                 disabled={loading || !question.trim()}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="shrink-0 p-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white shadow-lg border border-blue-500"
+                whileHover={{ scale: 1.15, rotate: 5 }}
+                whileTap={{ scale: 0.9, rotate: -5 }}
+                className="relative z-10 shrink-0 p-4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-white shadow-2xl border-2 border-blue-400"
               >
-                {loading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+                {loading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader2 size={22} />
+                  </motion.div>
+                ) : (
+                  <Send size={22} />
+                )}
               </motion.button>
             </motion.div>
 
-            {/* Result */}
+            {/* Result with enhanced animations */}
             {result && !loading && (
               <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="mt-6 space-y-3"
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.5, type: "spring" }}
+                className="mt-8 space-y-4"
               >
                 <div className="flex items-center gap-2">
                   <AgentBadge agent={result.agent_used} />
                   <span className="text-xs text-gray-500">{result.reasoning}</span>
                 </div>
-                <div className="glass-card rounded-2xl p-4 border border-[var(--card-border)] shadow text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
+                <motion.div 
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="glass-card rounded-2xl p-6 border-2 border-blue-200 shadow-2xl text-base text-gray-900 leading-relaxed whitespace-pre-wrap bg-white/90 backdrop-blur-md"
+                  whileHover={{ scale: 1.01, boxShadow: "0 25px 50px rgba(59, 130, 246, 0.2)" }}
+                >
                   {result.answer}
-                </div>
+                </motion.div>
                 {result.source_trace.length > 0 && (
                   <div>
                     <button
@@ -523,43 +581,69 @@ export default function QueryPage() {
               </motion.div>
             )}
 
-            {/* Suggestions — only on empty state */}
+            {/* Suggestions with staggered animations */}
             {!result && !loading && (
               <motion.div 
-                className="mt-4 flex flex-wrap gap-2"
+                className="mt-6 space-y-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.3 }}
               >
-                {SUGGESTIONS.map((s, i) => (
-                  <motion.button
-                    key={s}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleSubmit(s)}
-                    className="text-sm px-4 py-2 rounded-full border border-gray-200 text-gray-700 hover:text-blue-600 hover:border-blue-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-all font-medium shadow-sm"
-                  >
-                    {s}
-                  </motion.button>
-                ))}
+                <motion.p
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-sm font-semibold text-gray-600 uppercase tracking-wide"
+                >
+                  💡 Try asking:
+                </motion.p>
+                <div className="flex flex-wrap gap-3">
+                  {SUGGESTIONS.map((s, i) => (
+                    <motion.button
+                      key={s}
+                      initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: 0.5 + i * 0.1, type: "spring" }}
+                      whileHover={{ scale: 1.08, y: -4, boxShadow: "0 10px 30px rgba(59, 130, 246, 0.3)" }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleSubmit(s)}
+                      className="text-sm px-5 py-3 rounded-full border-2 border-blue-200 bg-white text-gray-700 hover:text-blue-600 hover:border-blue-400 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-all font-semibold shadow-lg"
+                    >
+                      {s}
+                    </motion.button>
+                  ))}
+                </div>
               </motion.div>
             )}
 
-            {/* Loading indicator */}
+            {/* Loading indicator with pulse animation */}
             <AnimatePresence>
               {loading && (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="mt-4 flex justify-start"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-6 flex justify-start"
                 >
-                  <div className="glass-card px-4 py-3 rounded-2xl rounded-tl-sm border border-[var(--card-border)] flex items-center gap-2 text-sm text-gray-500">
-                    <Loader2 size={14} className="animate-spin" /> Thinking…
-                  </div>
+                  <motion.div 
+                    className="glass-card px-6 py-4 rounded-2xl rounded-tl-sm border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-cyan-50 flex items-center gap-3 text-base text-blue-600 font-semibold shadow-xl"
+                    animate={{ 
+                      boxShadow: [
+                        "0 10px 30px rgba(59, 130, 246, 0.2)",
+                        "0 10px 40px rgba(59, 130, 246, 0.4)",
+                        "0 10px 30px rgba(59, 130, 246, 0.2)"
+                      ]
+                    }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Loader2 size={18} />
+                    </motion.div>
+                    <span>Thinking…</span>
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1206,6 +1290,7 @@ export default function QueryPage() {
         )}
 
       </AnimatePresence>
+      </div>
     </div>
   );
 }
