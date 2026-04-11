@@ -1,4 +1,5 @@
-<img width="50" height="50" alt="logoread" src="https://github.com/user-attachments/assets/75a53991-e249-49a9-9fee-10d1b2901965" />
+<img width="50" height="50" alt="logoread" src="https://github.com/user-attachments/assets/75a53991-e249-49a9-9fee-10d1b2901965" /><img width="100" height="100" alt="textlogo" src="https://github.com/user-attachments/assets/5976bade-b317-4f26-bee8-1df49e8dbf00" />
+
 
 # 🧠 Recall.AI: Organizational Memory & Reasoning Engine
 
