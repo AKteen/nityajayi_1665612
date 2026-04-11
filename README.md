@@ -1,4 +1,7 @@
-# 🧠 Organizational Memory & Reasoning Engine
+# 🧠 Recall.AI: Organizational Memory & Reasoning Engine
+
+
+![flow-diagram](https://github.com/user-attachments/assets/2cded349-b7ec-4b6a-b68f-473c9cf6e94a)
 
 **Ask your company's knowledge base anything. Understand decisions, track who made them, and predict what breaks if things change.**
 
