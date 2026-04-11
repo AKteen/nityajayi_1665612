@@ -419,7 +419,7 @@ export default function QueryPage() {
         transition={{ delay: 0.5, duration: 0.5 }}
         className="flex justify-center mb-12"
       >
-        <div className="inline-flex flex-nowrap gap-3 p-2 rounded-3xl glass-card border-2 border-blue-200 shadow-2xl bg-white/80 backdrop-blur-md">
+        <div className="inline-flex flex-nowrap gap-3 p-2 rounded-3xl glass-card shadow-2xl bg-white/80 backdrop-blur-md">
         {TABS.map(({ id, label, icon: Icon }, index) => (
           <motion.button
             key={id}
