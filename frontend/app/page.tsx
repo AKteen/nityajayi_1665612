@@ -161,7 +161,7 @@ export default function HomePage() {
                   Select Existing File
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl h-[600px] flex flex-col bg-gradient-to-br from-white via-blue-50 to-cyan-50">
+              <DialogContent className="max-w-2xl flex flex-col bg-gradient-to-br from-white via-blue-50 to-cyan-50 my-8 p-6">
                 <DialogHeader className="flex-shrink-0 pb-4">
                   <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                     Select from Existing Files
@@ -170,7 +170,7 @@ export default function HomePage() {
                     Choose a file you've already uploaded to query it directly
                   </DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 overflow-hidden bg-white rounded-xl p-4 shadow-inner" style={{ minHeight: 0 }}>
+                <div className="overflow-hidden bg-white rounded-xl p-3 shadow-inner" style={{ height: '300px' }}>
                   <FileSelector onSelectFile={handleFileSelect} selectedSource={selectedSource} />
                 </div>
                 <div className="flex justify-end gap-3 pt-4 border-t border-blue-200 flex-shrink-0">

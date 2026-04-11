@@ -225,5 +225,67 @@ async def query(req: QueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/graph/data")
+async def get_graph_data():
+    """Return all nodes and edges from Neo4j for graph visualization."""
+    try:
+        from db.neo import _driver
+        with _driver.session() as session:
+            result = session.run("""
+                MATCH (d:Decision)
+                OPTIONAL MATCH (d)-[:MADE_BY]->(p:Person)
+                OPTIONAL MATCH (d)-[:BASED_ON]->(rn:Reason)
+                OPTIONAL MATCH (d)-[:ALTERNATIVE]->(a:Alternative)
+                RETURN d, p, rn, a
+            """)
+            nodes_map = {}
+            edges_set = set()
+            
+            for record in result.data():
+                d = record["d"]
+                if d and d.get("id"):
+                    source = d.get("source", "unknown")
+                    decision_id = d["id"]
+                    
+                    if decision_id not in nodes_map:
+                        nodes_map[decision_id] = {
+                            "id": decision_id, 
+                            "label": (d.get("action") or "")[:60], 
+                            "type": "Decision", 
+                            "source": source, 
+                            "subject": d.get("subject", ""), 
+                            "impact": d.get("impact", "")
+                        }
+                    
+                    p = record["p"]
+                    if p and p.get("name"):
+                        # Make person ID unique per source
+                        person_id = f"{p['name']}@{source}"
+                        if person_id not in nodes_map:
+                            nodes_map[person_id] = {"id": person_id, "label": p["name"], "type": "Person", "source": source}
+                        edges_set.add((decision_id, person_id, "MADE_BY"))
+                    
+                    rn = record["rn"]
+                    if rn and rn.get("text"):
+                        # Make reason ID unique per source
+                        reason_id = f"{rn['text'][:100]}@{source}"
+                        if reason_id not in nodes_map:
+                            nodes_map[reason_id] = {"id": reason_id, "label": (rn["text"])[:50], "type": "Reason", "source": source}
+                        edges_set.add((decision_id, reason_id, "BASED_ON"))
+                    
+                    a = record["a"]
+                    if a and a.get("text"):
+                        # Make alternative ID unique per source
+                        alt_id = f"{a['text'][:100]}@{source}"
+                        if alt_id not in nodes_map:
+                            nodes_map[alt_id] = {"id": alt_id, "label": (a["text"])[:50], "type": "Alternative", "source": source}
+                        edges_set.add((decision_id, alt_id, "ALTERNATIVE"))
+            
+            edges = [{"source": s, "target": t, "type": typ} for s, t, typ in edges_set]
+            return {"nodes": list(nodes_map.values()), "edges": edges}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

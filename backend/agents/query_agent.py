@@ -1,6 +1,6 @@
 import logging
 from langchain_groq import ChatGroq
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage
 from core.config import settings
 from tools.neo import search_decisions
 from tools.chroma import search_raw_memory
@@ -67,14 +67,11 @@ def _run_tools_directly(question: str, source_filter: str = None) -> tuple[list,
 def run_query_agent(question: str, source_filter: str = None) -> dict:
     logger.info(f"[QUERY AGENT] Question: {question} | Filter: {source_filter}")
 
+    messages = [SystemMessage(content=SYSTEM)]
     if source_filter:
-        messages = [
-            SystemMessage(content=SYSTEM),
-            SystemMessage(content=f"IMPORTANT: User is querying ONLY from source '{source_filter}'. Do not use information from other sources."),
-            HumanMessage(content=question)
-        ]
-    else:
-        messages = [SystemMessage(content=SYSTEM), HumanMessage(content=question)]
+        messages.append(SystemMessage(content=f"IMPORTANT: User is querying ONLY from source '{source_filter}'. Do not use information from other sources."))
+
+    messages.append(HumanMessage(content=question))
 
     tools_used = []
     source_trace = []
@@ -105,10 +102,8 @@ def run_query_agent(question: str, source_filter: str = None) -> dict:
             logger.warning(f"[QUERY AGENT] Tool call failed, falling back to direct tool execution: {e}")
             tool_results, tools_used, source_trace = _run_tools_directly(question, source_filter)
             context = "\n\n".join(tool_results)
-            fallback_messages = [
-                SystemMessage(content=SYSTEM),
-                HumanMessage(content=f"Context from knowledge base:\n{context}\n\nQuestion: {question}")
-            ]
+            fallback_messages = [SystemMessage(content=SYSTEM)]
+            fallback_messages.append(HumanMessage(content=f"Context from knowledge base:\n{context}\n\nQuestion: {question}"))
             response = llm_base.invoke(fallback_messages)
             return {
                 "answer": response.content,

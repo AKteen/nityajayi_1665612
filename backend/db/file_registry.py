@@ -51,57 +51,56 @@ def check_file_exists(file_hash: str) -> dict | None:
 def list_all_files() -> list[dict]:
     """List all registered files."""
     with _driver.session() as session:
-        # First try to get from File nodes
+        # Get explicitly registered File nodes
         result = session.run(
             """
             MATCH (f:File)
             RETURN f.filename as filename, f.hash as hash, f.type as type,
                    f.source as source, f.uploaded_at as uploaded_at
-            ORDER BY f.uploaded_at DESC
             """
         )
-        files = [record.data() for record in result]
-        
-        # If no File nodes exist, extract from Decision nodes
-        if not files:
-            result = session.run(
-                """
-                MATCH (d:Decision)
-                WITH DISTINCT d.source as source
-                WHERE source IS NOT NULL AND source <> ''
-                WITH source,
-                     CASE 
-                       WHEN source STARTS WITH 'document:' THEN substring(source, 9)
-                       WHEN source STARTS WITH 'audio:' THEN substring(source, 6)
-                       WHEN source STARTS WITH 'image:' THEN substring(source, 6)
-                       WHEN source STARTS WITH 'slack:' THEN '#' + substring(source, 6)
-                       ELSE source
-                     END as filename
-                WITH source, filename,
-                     CASE
-                       WHEN toLower(source) CONTAINS '.pdf' THEN 'pdf'
-                       WHEN toLower(source) CONTAINS '.xlsx' THEN 'xlsx'
-                       WHEN toLower(source) CONTAINS '.xls' THEN 'xls'
-                       WHEN toLower(source) CONTAINS '.mp3' THEN 'mp3'
-                       WHEN toLower(source) CONTAINS '.mp4' THEN 'mp4'
-                       WHEN toLower(source) CONTAINS '.mov' THEN 'mov'
-                       WHEN toLower(source) CONTAINS '.avi' THEN 'avi'
-                       WHEN toLower(source) CONTAINS '.wav' THEN 'wav'
-                       WHEN toLower(source) CONTAINS '.m4a' THEN 'm4a'
-                       WHEN toLower(source) CONTAINS '.png' THEN 'png'
-                       WHEN toLower(source) CONTAINS '.jpg' THEN 'jpg'
-                       WHEN toLower(source) CONTAINS '.jpeg' THEN 'jpeg'
-                       WHEN toLower(source) CONTAINS '.gif' THEN 'gif'
-                       WHEN toLower(source) CONTAINS '.webp' THEN 'webp'
-                       WHEN source STARTS WITH 'slack:' THEN 'slack'
-                       ELSE 'unknown'
-                     END as type
-                RETURN filename, '' as hash, type, source, '' as uploaded_at
-                ORDER BY source DESC
-                """
-            )
-            files = [record.data() for record in result]
-        
+        registered = {r["source"]: r.data() for r in result}
+
+        # Also collect sources from Decision nodes (covers audio/image/slack ingestions)
+        result = session.run(
+            """
+            MATCH (d:Decision)
+            WITH DISTINCT d.source as source
+            WHERE source IS NOT NULL AND source <> ''
+            WITH source,
+                 CASE
+                   WHEN source STARTS WITH 'document:' THEN substring(source, 9)
+                   WHEN source STARTS WITH 'audio:' THEN substring(source, 6)
+                   WHEN source STARTS WITH 'image:' THEN substring(source, 6)
+                   WHEN source STARTS WITH 'slack:' THEN '#' + substring(source, 6)
+                   ELSE source
+                 END as filename,
+                 CASE
+                   WHEN toLower(source) CONTAINS '.pdf' THEN 'pdf'
+                   WHEN toLower(source) CONTAINS '.xlsx' THEN 'xlsx'
+                   WHEN toLower(source) CONTAINS '.xls' THEN 'xls'
+                   WHEN toLower(source) CONTAINS '.mp3' THEN 'mp3'
+                   WHEN toLower(source) CONTAINS '.mp4' THEN 'mp4'
+                   WHEN toLower(source) CONTAINS '.mov' THEN 'mov'
+                   WHEN toLower(source) CONTAINS '.avi' THEN 'avi'
+                   WHEN toLower(source) CONTAINS '.wav' THEN 'wav'
+                   WHEN toLower(source) CONTAINS '.m4a' THEN 'm4a'
+                   WHEN toLower(source) CONTAINS '.png' THEN 'png'
+                   WHEN toLower(source) CONTAINS '.jpg' THEN 'jpg'
+                   WHEN toLower(source) CONTAINS '.jpeg' THEN 'jpeg'
+                   WHEN toLower(source) CONTAINS '.gif' THEN 'gif'
+                   WHEN toLower(source) CONTAINS '.webp' THEN 'webp'
+                   WHEN source STARTS WITH 'slack:' THEN 'slack'
+                   ELSE 'unknown'
+                 END as type
+            RETURN filename, '' as hash, type, source, '' as uploaded_at
+            """
+        )
+        for r in result:
+            if r["source"] not in registered:
+                registered[r["source"]] = r.data()
+
+        files = sorted(registered.values(), key=lambda f: f.get("uploaded_at") or "", reverse=True)
         return files
 
 def get_file_by_source(source: str) -> dict | None:

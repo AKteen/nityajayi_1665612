@@ -185,6 +185,32 @@ export async function listFiles(): Promise<FileMetadata[]> {
   }
 }
 
+export interface GraphNode {
+  id: string;
+  label: string;
+  type: "Decision" | "Person" | "Reason" | "Alternative";
+  source?: string;
+  subject?: string;
+  impact?: string;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  type: "MADE_BY" | "BASED_ON" | "ALTERNATIVE";
+}
+
+export interface GraphData {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+export async function getGraphData(): Promise<GraphData> {
+  const res = await fetch(`${BASE}/graph/data`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to fetch graph data");
+  return res.json();
+}
+
 export async function checkFileBySource(source: string): Promise<{ exists: boolean; file?: FileMetadata }> {
   try {
     const res = await fetch(`${BASE}/files/check/${encodeURIComponent(source)}`);

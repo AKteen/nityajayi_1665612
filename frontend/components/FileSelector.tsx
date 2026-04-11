@@ -118,8 +118,8 @@ export default function FileSelector({ onSelectFile, selectedSource }: FileSelec
         </div>
       ) : (
         /* File Grid */
-        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar" style={{ maxHeight: 'calc(100vh - 400px)' }}>
-          <div className="grid gap-3 pb-2">
+        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="grid gap-1.5 pb-2">
             <AnimatePresence>
               {filteredFiles.map((file, i) => {
               const Icon = getFileIcon(file.type);
@@ -143,17 +143,17 @@ export default function FileSelector({ onSelectFile, selectedSource }: FileSelec
                     }`}
                     onClick={() => onSelectFile(file.source, file.filename)}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
+                    <CardContent className="p-2.5">
+                      <div className="flex items-center gap-3">
                         {/* Icon */}
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${getFileColor(file.type)} flex items-center justify-center flex-shrink-0 shadow-md`}>
-                          <Icon className="w-6 h-6 text-white" />
+                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getFileColor(file.type)} flex items-center justify-center flex-shrink-0 shadow-md`}>
+                          <Icon className="w-4 h-4 text-white" />
                         </div>
                         
                         {/* File Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold text-sm text-gray-900 truncate">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <h4 className="font-semibold text-xs text-gray-900 truncate">
                               {file.filename}
                             </h4>
                             {isSelected && (
@@ -162,13 +162,13 @@ export default function FileSelector({ onSelectFile, selectedSource }: FileSelec
                                 animate={{ scale: 1 }}
                                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
                               >
-                                <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
                               </motion.div>
                             )}
                           </div>
                           
                           <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant="outline" className="text-xs font-medium">
+                            <Badge variant="outline" className="text-xs font-medium py-0 px-1.5">
                               {file.type.toUpperCase()}
                             </Badge>
                             {file.uploaded_at && (

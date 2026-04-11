@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Home, Activity, Search, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Home, Activity, Search, LogIn, LogOut, Menu, X, Network } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { checkHealth } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +37,7 @@ export default function Navbar() {
   const links = [
     { href: "/", label: "Home", icon: Home },
     { href: "/query", label: "Query", icon: Search },
+    { href: "/graph", label: "Graph", icon: Network },
     { href: "/activity", label: "Activity", icon: Activity },
   ];
 

@@ -49,10 +49,8 @@ export default function QueryPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<QueryResponse | null>(null);
   const [queryError, setQueryError] = useState<string | null>(null);
-  const [displayedAnswer, setDisplayedAnswer] = useState("");
   const [showSources, setShowSources] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const answerRef = useRef<string>("");
 
   // ── PDF Upload state ──────────────────────────────────────────
   const [dragOver, setDragOver] = useState(false);
@@ -94,30 +92,14 @@ export default function QueryPage() {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  // Typing animation
-  useEffect(() => {
-    if (!result) return;
-    setDisplayedAnswer("");
-    answerRef.current = result.answer;
-    let i = 0;
-    const interval = setInterval(() => {
-      i++;
-      setDisplayedAnswer(answerRef.current.slice(0, i));
-      if (i >= answerRef.current.length) clearInterval(interval);
-    }, 12);
-    return () => clearInterval(interval);
-  }, [result]);
-
   // ── Query handlers ────────────────────────────────────────────
   async function handleSubmit(q?: string) {
     const query = q ?? question;
     if (!query.trim()) return;
-    setQuestion(query);
+    setQuestion("");
     setLoading(true);
     setQueryError(null);
     setResult(null);
-    setDisplayedAnswer("");
-    setShowSources(false);
     try {
       const data = await queryKnowledge(query, sourceContext || undefined, user?.id);
       setResult(data);
@@ -512,7 +494,50 @@ export default function QueryPage() {
               </motion.button>
             </motion.div>
 
-            {/* Suggestions */}
+            {/* Result */}
+            {result && !loading && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-6 space-y-3"
+              >
+                <div className="flex items-center gap-2">
+                  <AgentBadge agent={result.agent_used} />
+                  <span className="text-xs text-gray-500">{result.reasoning}</span>
+                </div>
+                <div className="glass-card rounded-2xl p-4 border border-[var(--card-border)] shadow text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">
+                  {result.answer}
+                </div>
+                {result.source_trace.length > 0 && (
+                  <div>
+                    <button
+                      onClick={() => setShowSources(v => !v)}
+                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 transition-colors"
+                    >
+                      {showSources ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                      {result.source_trace.length} source{result.source_trace.length > 1 ? "s" : ""}
+                    </button>
+                    <AnimatePresence>
+                      {showSources && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="mt-2 space-y-2 overflow-hidden"
+                        >
+                          {result.source_trace.map((trace, j) => (
+                            <SourceCard key={j} trace={trace} />
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Suggestions — only on empty state */}
             {!result && !loading && (
               <motion.div 
                 className="mt-4 flex flex-wrap gap-2"
@@ -537,106 +562,33 @@ export default function QueryPage() {
               </motion.div>
             )}
 
-            {/* Error */}
-            <AnimatePresence>
-              {queryError && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="mt-6 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-sm flex items-center justify-between"
-                >
-                  <span>{queryError}</span>
-                  <button onClick={() => setQueryError(null)}>
-                    <RotateCcw size={14} />
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Skeleton */}
+            {/* Loading indicator */}
             <AnimatePresence>
               {loading && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="mt-8 space-y-3"
+                  className="mt-4 flex justify-start"
                 >
-                  {[80, 60, 90, 50].map((w, i) => (
-                    <div
-                      key={i}
-                      className="h-3 rounded-full bg-white/5 animate-pulse"
-                      style={{ width: `${w}%` }}
-                    />
-                  ))}
+                  <div className="glass-card px-4 py-3 rounded-2xl rounded-tl-sm border border-[var(--card-border)] flex items-center gap-2 text-sm text-gray-500">
+                    <Loader2 size={14} className="animate-spin" /> Thinking…
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Result */}
-            <AnimatePresence>
-              {result && (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="mt-8 space-y-4"
+            {/* New query button */}
+            {result && !loading && (
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={() => { setResult(null); setShowSources(false); inputRef.current?.focus(); }}
+                  className="text-xs text-orange-600 hover:text-orange-500 transition-colors flex items-center gap-1"
                 >
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <AgentBadge agent={result.agent_used} />
-                    <span className="text-xs text-gray-600">{result.reasoning}</span>
-                    <span className="text-xs text-gray-600 ml-auto">
-                      {new Date(result.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-
-                  <div className="glass-card rounded-2xl p-8 border-2 border-[var(--card-border)] shadow-lg">
-                    <p
-                      className={`text-base text-gray-900 leading-relaxed whitespace-pre-wrap font-medium ${
-                        displayedAnswer.length < result.answer.length ? "cursor-blink" : ""
-                      }`}
-                    >
-                      {displayedAnswer}
-                    </p>
-                  </div>
-
-                  {result.source_trace.length > 0 && (
-                    <div>
-                      <button
-                        onClick={() => setShowSources((v) => !v)}
-                        className="flex items-center gap-2 text-xs text-gray-600 hover:text-gray-900 transition-colors mb-3"
-                      >
-                        {showSources ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                        {result.source_trace.length} source
-                        {result.source_trace.length > 1 ? "s" : ""} used
-                      </button>
-                      <AnimatePresence>
-                        {showSources && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="space-y-3 overflow-hidden"
-                          >
-                            {result.source_trace.map((trace, i) => (
-                              <SourceCard key={i} trace={trace} />
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => { setResult(null); setQuestion(""); inputRef.current?.focus(); }}
-                    className="text-xs text-blue-600 hover:text-blue-500 transition-colors flex items-center gap-1"
-                  >
-                    <RotateCcw size={12} /> Ask another question
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  <RotateCcw size={12} /> New query
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
 
