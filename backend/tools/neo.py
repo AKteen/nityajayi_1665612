@@ -6,6 +6,7 @@ from db.neo import neo_search
 
 class SearchDecisionsInput(BaseModel):
     query: str
+    source_filter: Optional[str] = None
 
 
 def _search_decisions(query: str, source_filter: Optional[str] = None) -> str:

@@ -6,6 +6,7 @@ from db.chroma import chroma_search
 
 class SearchRawMemoryInput(BaseModel):
     query: str
+    source_filter: Optional[str] = None
 
 
 def _search_raw_memory(query: str, source_filter: Optional[str] = None) -> str:

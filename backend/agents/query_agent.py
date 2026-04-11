@@ -23,13 +23,14 @@ Use search_raw_memory to find raw context, evidence and details from documents a
 
 CRITICAL RULES:
 1. ONLY answer based on the data returned from the tools
-2. If source_filter is active, ONLY use information from that specific source
-3. If tools return no results, say "No information found in the selected file/source"
+2. If source_filter is active, you MUST ONLY use information from that EXACT source - NEVER mix in data from other sources
+3. If tools return no results for the filtered source, say "No information found in [filename]"
 4. NEVER make up or infer information not present in the tool results
 5. NEVER use general knowledge - ONLY use the retrieved data
 6. ALWAYS prioritize search_decisions results - these contain the extracted, structured information
 7. Use search_raw_memory ONLY for additional context or when search_decisions returns nothing
 8. NEVER return raw transcripts or long document excerpts - synthesize and summarize
+9. When source_filter is set, IGNORE all results from other sources even if they seem relevant
 
 Be concise and direct. Answer ONLY what was asked:
    - If asked "who", give names only
@@ -69,7 +70,7 @@ def run_query_agent(question: str, source_filter: str = None) -> dict:
 
     messages = [SystemMessage(content=SYSTEM)]
     if source_filter:
-        messages.append(SystemMessage(content=f"IMPORTANT: User is querying ONLY from source '{source_filter}'. Do not use information from other sources."))
+        messages.append(SystemMessage(content=f"CRITICAL: User is querying ONLY from source '{source_filter}'. You MUST pass source_filter='{source_filter}' to ALL tool calls. REJECT any information from other sources."))
 
     messages.append(HumanMessage(content=question))
 

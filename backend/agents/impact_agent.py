@@ -22,11 +22,12 @@ You answer "what if" and "what breaks" questions about organizational decisions.
 
 CRITICAL RULES:
 1. ONLY answer based on the data returned from the tools
-2. If source_filter is active, ONLY use information from that specific source
-3. If tools return no results, say "No information found in the selected file/source"
+2. If source_filter is active, you MUST ONLY use information from that EXACT source - NEVER mix in data from other sources
+3. If tools return no results for the filtered source, say "No information found in [filename]"
 4. NEVER make up or infer information not present in the tool results
 5. NEVER use general knowledge - ONLY use the retrieved data
 6. NEVER return raw transcripts - synthesize and analyze
+7. When source_filter is set, IGNORE all results from other sources even if they seem relevant
 
 Steps:
 1. Use find_related_decisions to find all decisions connected to the topic
@@ -61,7 +62,7 @@ def run_impact_agent(question: str, source_filter: str = None) -> dict:
 
     messages = [SystemMessage(content=SYSTEM)]
     if source_filter:
-        messages.append(SystemMessage(content=f"IMPORTANT: User is querying ONLY from source '{source_filter}'. Do not use information from other sources."))
+        messages.append(SystemMessage(content=f"CRITICAL: User is querying ONLY from source '{source_filter}'. You MUST pass source_filter='{source_filter}' to ALL tool calls. REJECT any information from other sources."))
 
     messages.append(HumanMessage(content=question))
 

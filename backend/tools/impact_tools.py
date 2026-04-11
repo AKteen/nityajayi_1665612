@@ -6,10 +6,12 @@ from db.neo import neo_impact_search, neo_search as _neo_search
 
 class TopicInput(BaseModel):
     topic: str
+    source_filter: Optional[str] = None
 
 
 class PersonInput(BaseModel):
     person_name: str
+    source_filter: Optional[str] = None
 
 
 def _find_related_decisions(topic: str, source_filter: Optional[str] = None) -> str:

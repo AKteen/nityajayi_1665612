@@ -133,11 +133,7 @@ export default function QueryPage() {
       setUploadState("success");
       setContextLabel(`📄 ${selectedFile.name}`);
       setSourceContext(`document:${selectedFile.name}`);
-      setUploadResult(
-        typeof data.result === "object"
-          ? JSON.stringify(data.result, null, 2)
-          : String(data.result)
-      );
+      setUploadResult("Ingestion completed successfully");
     } catch (e) {
       setUploadState("error");
       setUploadError(e instanceof Error ? e.message : "Upload failed");
@@ -178,11 +174,7 @@ export default function QueryPage() {
       setExcelState("success");
       setContextLabel(`📊 ${selectedExcel.name}`);
       setSourceContext(`document:${selectedExcel.name}`);
-      setExcelResult(
-        typeof data.result === "object"
-          ? JSON.stringify(data.result, null, 2)
-          : String(data.result)
-      );
+      setExcelResult("Ingestion completed successfully");
     } catch (e) {
       setExcelState("error");
       setExcelError(e instanceof Error ? e.message : "Excel upload failed");
@@ -210,11 +202,7 @@ export default function QueryPage() {
       setSlackState("success");
       setContextLabel(`💬 #${channelId.trim()}`);
       setSourceContext(`slack:${channelId.trim()}`);
-      setSlackResult(
-        typeof data.result === "object"
-          ? JSON.stringify(data.result, null, 2)
-          : String(data.result)
-      );
+      setSlackResult("Ingestion completed successfully");
     } catch (e) {
       setSlackState("error");
       setSlackError(e instanceof Error ? e.message : "Slack ingest failed");
@@ -248,12 +236,8 @@ export default function QueryPage() {
       setAudioState("success");
       setContextLabel(`🎵 ${audioFile.name}`);
       setSourceContext(`audio:${audioFile.name}`);
-      setTranscript(data.transcript || null);
-      setAudioResult(
-        typeof data.result === "object"
-          ? JSON.stringify(data.result, null, 2)
-          : String(data.result)
-      );
+      setTranscript(null);
+      setAudioResult("Ingestion completed successfully");
     } catch (e) {
       setAudioState("error");
       setAudioError(e instanceof Error ? e.message : "Audio ingest failed");
@@ -291,12 +275,8 @@ export default function QueryPage() {
       setImageState("success");
       setContextLabel(`🖼️ ${imageFile.name}`);
       setSourceContext(`image:${imageFile.name}`);
-      setExtractedText(data.extracted_text || null);
-      setImageResult(
-        typeof data.result === "object"
-          ? JSON.stringify(data.result, null, 2)
-          : String(data.result)
-      );
+      setExtractedText(null);
+      setImageResult("Ingestion completed successfully");
     } catch (e) {
       setImageState("error");
       setImageError(e instanceof Error ? e.message : "Image ingest failed");
@@ -355,7 +335,13 @@ export default function QueryPage() {
 
         <div className="flex gap-3">
           <button
-            onClick={onQuery}
+            onClick={() => {
+              onQuery();
+              setTimeout(() => {
+                inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                inputRef.current?.focus();
+              }, 100);
+            }}
             className="flex-1 py-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white text-base font-bold transition-colors flex items-center justify-center gap-2 shadow-lg border border-blue-500"
           >
             <Send size={18} /> Query this now
@@ -707,7 +693,11 @@ export default function QueryPage() {
               <IngestSuccess
                 label="Document ingested successfully"
                 result={uploadResult}
-                onQuery={() => switchTab("query")}
+                onQuery={() => {
+                  setContextLabel(`📄 ${selectedFile?.name}`);
+                  setSourceContext(`document:${selectedFile?.name}`);
+                  switchTab("query");
+                }}
                 onReset={resetUpload}
                 resetLabel="Upload another"
               />
@@ -830,7 +820,11 @@ export default function QueryPage() {
               <IngestSuccess
                 label="Excel ingested successfully"
                 result={excelResult}
-                onQuery={() => switchTab("query")}
+                onQuery={() => {
+                  setContextLabel(`📊 ${selectedExcel?.name}`);
+                  setSourceContext(`document:${selectedExcel?.name}`);
+                  switchTab("query");
+                }}
                 onReset={resetExcel}
                 resetLabel="Upload another"
               />
@@ -945,7 +939,11 @@ export default function QueryPage() {
               <IngestSuccess
                 label="Audio transcribed & ingested"
                 result={audioResult}
-                onQuery={() => switchTab("query")}
+                onQuery={() => {
+                  setContextLabel(`🎵 ${audioFile?.name}`);
+                  setSourceContext(`audio:${audioFile?.name}`);
+                  switchTab("query");
+                }}
                 onReset={resetAudio}
                 resetLabel="Upload another"
               />
@@ -1060,7 +1058,11 @@ export default function QueryPage() {
               <IngestSuccess
                 label="Image OCR & ingested"
                 result={imageResult}
-                onQuery={() => switchTab("query")}
+                onQuery={() => {
+                  setContextLabel(`🖼️ ${imageFile?.name}`);
+                  setSourceContext(`image:${imageFile?.name}`);
+                  switchTab("query");
+                }}
                 onReset={resetImage}
                 resetLabel="Upload another"
               />
@@ -1191,7 +1193,11 @@ export default function QueryPage() {
               <IngestSuccess
                 label={`#${channelId} ingested successfully`}
                 result={slackResult}
-                onQuery={() => switchTab("query")}
+                onQuery={() => {
+                  setContextLabel(`💬 #${channelId}`);
+                  setSourceContext(`slack:${channelId}`);
+                  switchTab("query");
+                }}
                 onReset={resetSlack}
                 resetLabel="Ingest another"
               />
